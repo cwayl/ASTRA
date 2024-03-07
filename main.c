@@ -405,21 +405,28 @@ int main() {
         printf("Elevation: %f\n", elevationRad);
 
         int azimuthInt = floor(azimuthRad);
-        int elevationInt = floor(elevationRad);
+        int elevationInt = floor(fabs(elevationRad));
 
         char client_message[8];
         snprintf(client_message, sizeof(client_message), "P %d %d", azimuthInt, elevationInt);
 
-        printf("%s",client_message);
+        printf("%s\n",client_message);
 
+        /*
         // Send the message to server:
         if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
+            printf("Unable to send message\n");
+            return -1;
+        }*/
+
+        // Send the message to server:
+        if(send(socket_desc, "P 160 20", strlen("P 160 20"), 0) < 0) {
             printf("Unable to send message\n");
             return -1;
         }
 
 
-        sleep(1);
+            sleep(1);
 
     }
 
