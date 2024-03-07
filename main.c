@@ -155,19 +155,9 @@ int main() {
         day = ptr->tm_mday;
         UT = (float) ptr->tm_hour + (float) ptr->tm_min / 60 + (float) ptr->tm_sec / 3600;
 
-        /*
-        // for testing
-        month = 2;
-        day = 29;
-        UT = 20;
-*/
-
         double dayOfYear = ptr->tm_yday + 1 + UT/24;
-        // for testing
-        dayOfYear = 60 + (double) 20/24;
         double delta_t = dayOfYear - epoch;
         double delta_MeanAnamoly = delta_t * meanMotion * 360;
-
 
         double newMeanAnomaly;
         newMeanAnomaly = meanAnomaly + delta_MeanAnamoly;
@@ -191,20 +181,11 @@ int main() {
         r_perifocal[1][0] = (h * h / mu) * (1 / (1 + eccentricity * cos(theta))) * sin(theta); // y-component
         r_perifocal[2][0] = 0; // z-component
 
-        // printf("Position vector in the perifocal frame: [%lf, %lf, %lf]\n", r_perifocal[0][0], r_perifocal[1][0], r_perifocal[2][0]);
-
         // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
         double raanRad = raan * M_PI / 180.0;
         double inclinationRad = inclination * M_PI / 180.0;
         double argumentOfPerigeeRad = argumentOfPerigee * M_PI / 180.0;
 
-        /*
-        double Q[NUM_ROWS_Q][NUM_COLS_Q] = {
-                {cos(raanRad) * cos(argumentOfPerigeeRad) - sin(raanRad) * sin(argumentOfPerigeeRad) * cos(inclinationRad), -cos(raanRad) * sin(argumentOfPerigeeRad) - sin(raanRad) * cos(argumentOfPerigeeRad) * cos(inclinationRad), sin(raanRad) * sin(inclinationRad)},
-                {sin(raanRad) * cos(argumentOfPerigeeRad) + cos(raanRad) * sin(argumentOfPerigeeRad) * cos(inclinationRad), -sin(raanRad) * sin(argumentOfPerigeeRad) + cos(raanRad) * cos(argumentOfPerigeeRad) * cos(inclinationRad), -cos(raanRad) * sin(inclinationRad)},
-                {sin(argumentOfPerigeeRad) * sin(inclinationRad), cos(argumentOfPerigeeRad) * sin(inclinationRad), cos(inclinationRad)}
-        };
-        */
         // Step 5: Switching from the perifocal frame to the geocentric equatorial frame
         double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
                 {cos(argumentOfPerigeeRad), sin(argumentOfPerigeeRad), 0},
@@ -274,8 +255,6 @@ int main() {
                 {Q_Matrix_New[1][0] * r_perifocal[0][0] + Q_Matrix_New[1][1] * r_perifocal[1][0] +Q_Matrix_New[1][2] * r_perifocal[2][0]},
                 {Q_Matrix_New[2][0] * r_perifocal[0][0] + Q_Matrix_New[2][1] * r_perifocal[1][0] +Q_Matrix_New[2][2] * r_perifocal[2][0]}
         };
-
-        // printf("Position vector in the geocentric equatorial frame: [%lf, %lf, %lf]\n", r_geocentric[0][0], r_geocentric[1][0], r_geocentric[2][0]);
 
         // End cooper Code
 
@@ -396,9 +375,9 @@ int main() {
          * */
 
         if (rho_R[0][0] < 0) {
-            // printf("Move to Home\n");
+            printf("Move to Home\n");
         } else {
-            // printf("Move to Coordinates\n");
+            printf("Move to Coordinates\n");
         }
 
         printf("Azimuth: %f\n", azimuthRad);
@@ -415,7 +394,6 @@ int main() {
             printf("Unable to send message\n");
             return -1;
         }
-
 
         sleep(1);
 
