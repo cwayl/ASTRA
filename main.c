@@ -395,7 +395,7 @@ int main() {
          * Check z height
          * */
 
-        if (rho_R[0][0] < 0) {
+        if(rho_R[0][0] < 0) {
             // printf("Move to Home\n");
         } else {
             // printf("Move to Coordinates\n");
@@ -409,6 +409,8 @@ int main() {
 
         char client_message[8];
         snprintf(client_message, sizeof(client_message), "P %d %d", azimuthInt, elevationInt);
+
+        printf("%s",client_message);
 
         // Send the message to server:
         if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
