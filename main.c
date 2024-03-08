@@ -416,12 +416,14 @@ int main() {
 
 double solveKeplersEquation(double meanAnomalyRadians, double eccentricity){
     double E_0;
+    // inital values from Matt Harris lecture notes page 5.12
     if (meanAnomalyRadians < M_PI){
         E_0 = meanAnomalyRadians + eccentricity/2;
     }
     else {
         E_0 = meanAnomalyRadians - eccentricity/2;
     }
+    // Equation 3.17
     double E_i = E_0 - ((E_0 - eccentricity* sin(E_0) - meanAnomalyRadians)/(1-eccentricity* cos(E_0)));
     int iterations = 0;
     while((fabs(E_i-E_0) > TOLERANCE) & (iterations < MAX_ITERATIONS)){
@@ -433,6 +435,6 @@ double solveKeplersEquation(double meanAnomalyRadians, double eccentricity){
 }
 
 double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity){
+    // Equation 3.13a solved for true anomaly
     return fmod(2* atan(sqrt( (1+eccentricity)/(1-eccentricity)) * tan(eccentricAnomaly/2)) + 2*M_PI,2*M_PI);
 }
-
