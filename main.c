@@ -98,13 +98,13 @@ int main() {
     longitude = -82.409393;
     altitude = 1.382;
     epochYear = 2024;
-    epoch = 59.80121106;
-    inclination = 97.4396;
-    raan = 127.9486;
-    eccentricity = 0.0012457;
-    argumentOfPerigee = 306.0086;
-    meanAnomaly = 53.9993;
-    meanMotion = 15.19316519;
+    epoch = 66.31580553;
+    inclination = 120.5020;
+    raan = 140.7907;
+    eccentricity = 0.0192105;
+    argumentOfPerigee = 220.1275;
+    meanAnomaly = 138.5458;
+    meanMotion = 14.97153573550467;
 
 
 /*
@@ -155,19 +155,9 @@ int main() {
         day = ptr->tm_mday;
         UT = (float) ptr->tm_hour + (float) ptr->tm_min / 60 + (float) ptr->tm_sec / 3600;
 
-        /*
-        // for testing
-        month = 2;
-        day = 29;
-        UT = 20;
-*/
-
         double dayOfYear = ptr->tm_yday + 1 + UT/24;
-        // for testing
-        dayOfYear = 60 + (double) 20/24;
         double delta_t = dayOfYear - epoch;
         double delta_MeanAnamoly = delta_t * meanMotion * 360;
-
 
         double newMeanAnomaly;
         newMeanAnomaly = meanAnomaly + delta_MeanAnamoly;
@@ -395,38 +385,26 @@ int main() {
          * Check z height
          * */
 
-        if(rho_R[0][0] < 0) {
-            // printf("Move to Home\n");
-        } else {
-            // printf("Move to Coordinates\n");
-        }
-
         printf("Azimuth: %f\n", azimuthRad);
         printf("Elevation: %f\n", elevationRad);
 
-        int azimuthInt = floor(azimuthRad);
-        int elevationInt = floor(fabs(elevationRad));
-
-        char client_message[8];
-        snprintf(client_message, sizeof(client_message), "P %d %d", azimuthInt, elevationInt);
+        char client_message[9];
+        if(elevationRad < 0) {
+            snprintf(client_message, sizeof(client_message), "P 180 0");
+        } else {
+            snprintf(client_message, sizeof(client_message), "P %d %d", (int) floor(azimuthRad), (int) floor(elevationRad));
+        }
 
         printf("%s\n",client_message);
 
-        /*
         // Send the message to server:
         if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
             printf("Unable to send message\n");
             return -1;
-        }*/
-
-        // Send the message to server:
-        if(send(socket_desc, "P 160 20", strlen("P 160 20"), 0) < 0) {
-            printf("Unable to send message\n");
-            return -1;
         }
 
 
-            sleep(1);
+        sleep(1);
 
     }
 
