@@ -2,9 +2,6 @@
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <string.h>
 
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
@@ -23,38 +20,12 @@ double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity);
 
 int main() {
 
-    int socket_desc;
-    struct sockaddr_in server_addr;
-    char server_message[2000];
-
-    // Create socket:
-    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(socket_desc < 0){
-        printf("Unable to create socket\n");
-        return -1;
-    }
-    printf("Socket created successfully\n");
-
-    // Set port and IP the same as server-side:
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(4533);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    // Send connection request to server:
-    if(connect(socket_desc, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0){
-        printf("Unable to connect\n");
-        return -1;
-    }
-    printf("Connected with server successfully\n");
-
     // Start Cooper Code
 
     // Define variables for user input
     double latitude, longitude, altitude;
     int epochYear;
     double epoch, inclination, raan, eccentricity, argumentOfPerigee, meanAnomaly, meanMotion;
-
 
     // Step 1: Prompt user for TLE input
     /*
@@ -93,33 +64,33 @@ int main() {
 
      */
 
-
-    latitude = 39.531254;
-    longitude = -82.409393;
-    altitude = 1.382;
-    epochYear = 2024;
-    epoch = 66.31580553;
-    inclination = 120.5020;
-    raan = 140.7907;
-    eccentricity = 0.0192105;
-    argumentOfPerigee = 220.1275;
-    meanAnomaly = 138.5458;
-    meanMotion = 14.97153573550467;
-
-
 /*
-    latitude = 39.531254;
-    longitude = -82.409393;
+    latitude = 41.737878 ;
+    longitude = -111.830846;
     altitude = 1.382;
     epochYear = 2024;
-    epoch = 62.43560187;
-    inclination = 97.4392;
-    raan = 130.5442;
-    eccentricity = 0.0012317;
-    argumentOfPerigee = 297.0116;
-    meanAnomaly = 63.9850;
-    meanMotion = 15.19378124;
+    epoch = 59.80121106;
+    inclination = 97.4396;
+    raan = 127.9486;
+    eccentricity = 0.0012457;
+    argumentOfPerigee = 306.0086;
+    meanAnomaly = 53.9993;
+    meanMotion = 15.19316519;
 */
+
+
+
+    latitude = 41.737878;
+    longitude = -111.830846;
+    altitude = 1.382;
+    epochYear = 2024;
+    epoch = 67.57228056;
+    inclination = 97.4392;
+    raan = 135.6059;
+    eccentricity = 0.0012184;
+    argumentOfPerigee = 275.9347;
+    meanAnomaly = 84.0499;
+    meanMotion = 15.19538102;
 
 
     // Constants
@@ -181,20 +152,11 @@ int main() {
         r_perifocal[1][0] = (h * h / mu) * (1 / (1 + eccentricity * cos(theta))) * sin(theta); // y-component
         r_perifocal[2][0] = 0; // z-component
 
-        // printf("Position vector in the perifocal frame: [%lf, %lf, %lf]\n", r_perifocal[0][0], r_perifocal[1][0], r_perifocal[2][0]);
-
         // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
         double raanRad = raan * M_PI / 180.0;
         double inclinationRad = inclination * M_PI / 180.0;
         double argumentOfPerigeeRad = argumentOfPerigee * M_PI / 180.0;
 
-        /*
-        double Q[NUM_ROWS_Q][NUM_COLS_Q] = {
-                {cos(raanRad) * cos(argumentOfPerigeeRad) - sin(raanRad) * sin(argumentOfPerigeeRad) * cos(inclinationRad), -cos(raanRad) * sin(argumentOfPerigeeRad) - sin(raanRad) * cos(argumentOfPerigeeRad) * cos(inclinationRad), sin(raanRad) * sin(inclinationRad)},
-                {sin(raanRad) * cos(argumentOfPerigeeRad) + cos(raanRad) * sin(argumentOfPerigeeRad) * cos(inclinationRad), -sin(raanRad) * sin(argumentOfPerigeeRad) + cos(raanRad) * cos(argumentOfPerigeeRad) * cos(inclinationRad), -cos(raanRad) * sin(inclinationRad)},
-                {sin(argumentOfPerigeeRad) * sin(inclinationRad), cos(argumentOfPerigeeRad) * sin(inclinationRad), cos(inclinationRad)}
-        };
-        */
         // Step 5: Switching from the perifocal frame to the geocentric equatorial frame
         double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
                 {cos(argumentOfPerigeeRad), sin(argumentOfPerigeeRad), 0},
@@ -265,8 +227,6 @@ int main() {
                 {Q_Matrix_New[2][0] * r_perifocal[0][0] + Q_Matrix_New[2][1] * r_perifocal[1][0] +Q_Matrix_New[2][2] * r_perifocal[2][0]}
         };
 
-        // printf("Position vector in the geocentric equatorial frame: [%lf, %lf, %lf]\n", r_geocentric[0][0], r_geocentric[1][0], r_geocentric[2][0]);
-
         // End cooper Code
 
         // Start CJ Code
@@ -278,7 +238,7 @@ int main() {
          * Calculate local sidereal time */
 
         // Julian time.
-        double J_O = 367 * year - floor((7 * floor((month + 9) / 12)) / 4) + floor((275 * month) / 9) + day + 1721013.5;
+        double J_O = 367 * year - floor((7 * (year+floor((month + 9)/12))) / 4) + floor((275 * month) / 9) + day + 1721013.5;
         double T_O = (J_O - 2451545) / 36525;
 
         // Greenwich sidereal time
@@ -371,9 +331,8 @@ int main() {
 
         // convert unit vector to Azimuth + Elevation
         double Elevation = asin(rho_R[2][0]);
-        double check = rho_R[0][0] / cos(Elevation);
         double Azimuth = acos(rho_R[1][0] / cos(Elevation));
-        if (check < 0) {
+        if ((double) rho_R[0][0] / cos(Elevation) < 0) {
             Azimuth = 2 * M_PI - Azimuth;
         }
 
@@ -385,30 +344,22 @@ int main() {
          * Check z height
          * */
 
+        if (rho_R[0][0] < 0) {
+            printf("Move to Home\n");
+        } else {
+            printf("Move to Coordinates\n");
+        }
+
         printf("Azimuth: %f\n", azimuthRad);
         printf("Elevation: %f\n", elevationRad);
 
-        char client_message[9];
-        if(elevationRad < 0) {
-            snprintf(client_message, sizeof(client_message), "P 180 0");
-        } else {
-            snprintf(client_message, sizeof(client_message), "P %d %d", (int) floor(azimuthRad), (int) floor(elevationRad));
-        }
-
-        printf("%s\n",client_message);
-
-        // Send the message to server:
-        if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
-            printf("Unable to send message\n");
-            return -1;
-        }
 
 
         sleep(1);
 
     }
 
-    close(socket_desc);
+
     // End CJ Code
 
     return 0;
