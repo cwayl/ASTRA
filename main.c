@@ -2,6 +2,9 @@
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <string.h>
 
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
@@ -19,6 +22,31 @@ double solveKeplersEquation(double meanAnomaly, double eccentricity);
 double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity);
 
 int main() {
+
+    int socket_desc;
+    struct sockaddr_in server_addr;
+    char server_message[2000];
+
+    // Create socket:
+    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+
+    if(socket_desc < 0){
+        printf("Unable to create socket\n");
+        return -1;
+    }
+    printf("Socket created successfully\n");
+
+    // Set port and IP the same as server-side:
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(4533);
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    // Send connection request to server:
+    if(connect(socket_desc, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0){
+        printf("Unable to connect\n");
+        return -1;
+    }
+    printf("Connected with server successfully\n");
 
     // Start Cooper Code
 
@@ -353,13 +381,23 @@ int main() {
         printf("Azimuth: %f\n", azimuthRad);
         printf("Elevation: %f\n", elevationRad);
 
+        int azimuthInt = floor(azimuthRad);
+        int elevationInt = floor(elevationRad);
 
+        char client_message[8];
+        snprintf(client_message, sizeof(client_message), "P %d %d", azimuthInt, elevationInt);
+
+        // Send the message to server:
+        if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
+            printf("Unable to send message\n");
+            return -1;
+        }
 
         sleep(1);
 
     }
 
-
+    close(socket_desc);
     // End CJ Code
 
     return 0;
