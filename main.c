@@ -344,7 +344,7 @@ int main() {
          * Check z height
          * */
 
-        if (rho_R[0][0] < 0) {
+        if (rho_R[2][0] < 0) {
             printf("Move to Home\n");
         } else {
             printf("Move to Coordinates\n");
