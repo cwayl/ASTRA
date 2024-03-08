@@ -2,9 +2,6 @@
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <string.h>
 
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
@@ -23,38 +20,12 @@ double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity);
 
 int main() {
 
-    int socket_desc;
-    struct sockaddr_in server_addr;
-    char server_message[2000];
-
-    // Create socket:
-    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(socket_desc < 0){
-        printf("Unable to create socket\n");
-        return -1;
-    }
-    printf("Socket created successfully\n");
-
-    // Set port and IP the same as server-side:
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(4533);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    // Send connection request to server:
-    if(connect(socket_desc, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0){
-        printf("Unable to connect\n");
-        return -1;
-    }
-    printf("Connected with server successfully\n");
-
     // Start Cooper Code
 
     // Define variables for user input
     double latitude, longitude, altitude;
     int epochYear;
     double epoch, inclination, raan, eccentricity, argumentOfPerigee, meanAnomaly, meanMotion;
-
 
     // Step 1: Prompt user for TLE input
     /*
@@ -93,9 +64,9 @@ int main() {
 
      */
 
-
-    latitude = 39.531254;
-    longitude = -82.409393;
+/*
+    latitude = 41.737878 ;
+    longitude = -111.830846;
     altitude = 1.382;
     epochYear = 2024;
     epoch = 59.80121106;
@@ -105,21 +76,20 @@ int main() {
     argumentOfPerigee = 306.0086;
     meanAnomaly = 53.9993;
     meanMotion = 15.19316519;
+*/
 
 
-/*
-    latitude = 39.531254;
-    longitude = -82.409393;
+    latitude = 41.737878;
+    longitude = -111.830846;
     altitude = 1.382;
     epochYear = 2024;
-    epoch = 62.43560187;
+    epoch = 67.57228056;
     inclination = 97.4392;
-    raan = 130.5442;
-    eccentricity = 0.0012317;
-    argumentOfPerigee = 297.0116;
-    meanAnomaly = 63.9850;
-    meanMotion = 15.19378124;
-*/
+    raan = 135.6059;
+    eccentricity = 0.0012184;
+    argumentOfPerigee = 275.9347;
+    meanAnomaly = 84.0499;
+    meanMotion = 15.19538102;
 
 
     // Constants
@@ -267,7 +237,7 @@ int main() {
          * Calculate local sidereal time */
 
         // Julian time.
-        double J_O = 367 * year - floor((7 * floor((month + 9) / 12)) / 4) + floor((275 * month) / 9) + day + 1721013.5;
+        double J_O = 367 * year - floor((7 * (year+floor((month + 9)/12))) / 4) + floor((275 * month) / 9) + day + 1721013.5;
         double T_O = (J_O - 2451545) / 36525;
 
         // Greenwich sidereal time
@@ -360,9 +330,8 @@ int main() {
 
         // convert unit vector to Azimuth + Elevation
         double Elevation = asin(rho_R[2][0]);
-        double check = rho_R[0][0] / cos(Elevation);
         double Azimuth = acos(rho_R[1][0] / cos(Elevation));
-        if (check < 0) {
+        if ((double) rho_R[0][0] / cos(Elevation) < 0) {
             Azimuth = 2 * M_PI - Azimuth;
         }
 
@@ -373,7 +342,7 @@ int main() {
         /* Step 10 - Check
          * Check z height
          * */
-        asdf
+
 
         if (rho_R[0][0] < 0) {
             printf("Move to Home\n");
@@ -384,23 +353,12 @@ int main() {
         printf("Azimuth: %f\n", azimuthRad);
         printf("Elevation: %f\n", elevationRad);
 
-        int azimuthInt = floor(azimuthRad);
-        int elevationInt = floor(elevationRad);
-
-        char client_message[8];
-        snprintf(client_message, sizeof(client_message), "P %d %d", azimuthInt, elevationInt);
-
-        // Send the message to server:
-        if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
-            printf("Unable to send message\n");
-            return -1;
-        }
 
         sleep(1);
 
     }
 
-    close(socket_desc);
+
     // End CJ Code
 
     return 0;
