@@ -373,6 +373,7 @@ int main() {
         /* Step 10 - Check
          * Check z height
          * */
+        asdf
 
         if (rho_R[0][0] < 0) {
             printf("Move to Home\n");
