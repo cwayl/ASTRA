@@ -14,7 +14,7 @@
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
-#include "orbitalNumbers.h"
+#include "orbital_Numbers.h"
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define NUM_ROWS(a) ARRAYSIZE(a)

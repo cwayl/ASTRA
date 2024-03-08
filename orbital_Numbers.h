@@ -2,15 +2,15 @@
 // Created by CJ Wayland on 3/7/24.
 //
 
-#ifndef ASTRA_ORBITALNUMBERS_H
-#define ASTRA_ORBITALNUMBERS_H
+#ifndef ASTRA_ORBITAL_NUMBERS_H
+#define ASTRA_ORBITAL_NUMBERS_H
 
 #define deg2rad(a) ((double) (a * M_PI )/ (double) 180)
 #define rad2deg(a) ((double) (a * (double) 180 )/ M_PI)
 
 #define ASTRONOMICAL_UNIT 149597870700 // m
 
-#define MECURY_MU 22031.868551 // km^3 s^-2
+#define MERCURY_MU 22031.868551 // km^3 s^-2
 #define VENUS_MU 324858.592000 // km^3 s^-2
 #define EARTH_MU 398600.435507 // km^3 s^-2
 #define MOON_MU 4902.800118 // km^3 s^-2
@@ -21,7 +21,7 @@
 #define NEPTUNE_MU 6836527.100580 // km^3 s^-2
 #define PLUTO_MU 975.500000 // km^3 s^-2
 
-#define MECURY_FLATTENING 0.0009
+#define MERCURY_FLATTENING 0.0009
 #define VENUS_FLATTENING 0
 #define EARTH_FLATTENING 0.003353
 #define MOON_FLATTENING 0.0012
@@ -33,7 +33,7 @@
 #define PlUTO_FLATTENING 0
 
 
-#define MECURY_RADIUS_EQUATORIAL 2439.7 // km
+#define MERCURY_RADIUS_EQUATORIAL 2439.7 // km
 #define VENUS_RADIUS_EQUATORIAL 6051.8 // km
 #define EARTH_RADIUS_EQUATORIAL 6378.137 // km
 #define MOON_RADIUS_EQUATORIAL 1740 // km
@@ -45,4 +45,4 @@
 #define PlUTO_RADIUS_EQUATORIAL 1151  // km
 
 
-#endif //ASTRA_ORBITALNUMBERS_H
+#endif //ASTRA_ORBITAL_NUMBERS_H
