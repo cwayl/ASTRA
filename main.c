@@ -1,7 +1,20 @@
+/*
+ * Active Satellite Radio Tracking Antenna (ASTRA)
+ * Coded by:
+ * Cooper Gowan
+ * CJ Wayland
+ *
+ * References to Equations are from:
+ * Orbital Mechanics for Engineering Students (Forth Edition)
+ *   by Howard d. Curtis
+ *
+ */
+
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
+#include "orbitalNumbers.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
@@ -10,12 +23,13 @@
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define NUM_ROWS(a) ARRAYSIZE(a)
 #define NUM_COLS(a) ARRAYSIZE((a)[0])
-#define MAX_ITERATIONS 100
-#define TOLERANCE 1E-10
+#define MAX_ITERATIONS 100 // This is the maximum number of iterations used in iterative calculations
+#define TOLERANCE 1E-10 // This is the tolerance to which iterative calculations are computed
 #define NUM_ROWS_Q 3 // Number of rows in Q
 #define NUM_COLS_Q 3 // Number of columns in Q
-#define NUM_ROWS_RHO_G 3 // Number of rows in rho_G (position vector in perifocal frame)
-#define NUM_COLS_RHO_G 1 // Number of columns in rho_G, which is 1 since it's a vector
+#define NUM_ROWS_VECTOR 3 // Number of rows in a vector
+#define NUM_COLS_VECTOR 1 // Number of columns in a vector
+
 
 // Function prototypes
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
@@ -23,6 +37,24 @@ double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity);
 
 int main() {
 
+    /*
+     * The determination of where to point is broken down into ten steps.
+     *
+     * 1. Input TLE/Station Info
+     * 2. Calculate h (specific angular momentum)
+     * 3. Calculate True Anomaly
+     * 4. Calculate position vector in perifocal frame
+     * 5. Rotate position vector to geo equatorial frame
+     *      5a: Calculate the Rotation Matrix
+     *      5b: Multiply the position vector and Rotation Matrix
+     * 6. Calculate sidereal time
+     * 7. Calculate station position in geo equatorial frame
+     * 8. Calculate relative position of satellite to station
+     * 9. Calculate Azimuth and Elevation
+     * 10. Check if Elevation is above horizon
+     */
+
+    // Step 1: Input TLE/Station Info
     int socket_desc;
     struct sockaddr_in server_addr;
     char server_message[2000];
@@ -48,14 +80,14 @@ int main() {
     }
     printf("Connected with server successfully\n");
 
-    // Start Cooper Code
 
     // Define variables for user input
     double latitude, longitude, altitude;
     int epochYear;
-    double epoch, inclination, raan, eccentricity, argumentOfPerigee, meanAnomaly, meanMotion;
+    double epoch, inclination, raan, eccentricity, argumentOfPerigee, TLE_meanAnomaly, meanMotion;
 
-    // Step 1: Prompt user for TLE input
+    // This step is currently commented out to make troubleshooting and debugging easier
+
     /*
     printf("Enter Latitude of Ground Station (degrees): ");
     scanf("%lf", &latitude);
@@ -107,36 +139,114 @@ int main() {
 */
 
 
-
     latitude = 41.737878;
     longitude = -111.830846;
     altitude = 1.382;
     epochYear = 2024;
-    epoch = 67.57228056;
-    inclination = 97.4392;
-    raan = 135.6059;
-    eccentricity = 0.0012184;
-    argumentOfPerigee = 275.9347;
-    meanAnomaly = 84.0499;
-    meanMotion = 15.19538102;
+    epoch = 67.61470730;
+    inclination = 97.4731;
+    raan = 326.7464;
+    eccentricity = 0.0016921;
+    argumentOfPerigee = 129.5379;
+    TLE_meanAnomaly = 230.7355;
+    meanMotion = 15.21206633161949;
 
+    // Convert latitude to radians for future calulations
+    latitude = deg2rad(latitude);
 
-    // Constants
-    const double mu = 398600; // Earth's gravitational parameter in km^3/s^2
-    double a, h; // Semi-major axis, radius of orbit at perigee, and angular momentum
+    // Step 2: Calculate h (specific angular momentum)
+
+    double a; // Semi-major axis
+    double h; // specific angular momentum
     double n; // Mean Motion in radians per second
 
     // Convert Mean Motion from revolutions per day to radians per second
-    n = meanMotion * (2 * M_PI) / (24 * 3600); // Corrected variable
+    n = meanMotion * (2 * M_PI) / (24 * 3600);
 
-    // Step 2: Calculating orbital angular momentum
-    a = pow(mu / pow(n, 2), 1.0 / 3.0);
-    h = sqrt(mu * a * (1 - pow(eccentricity,2)));
+    // Equation 2.83 solved for a
+    // Substituting Equation 3.9 for T
+    a = pow(EARTH_MU / pow(n, 2), 1.0 / 3.0);
+    // Equation 2.45 solved for h
+    // Substituting Equation 2.73 we can set r = r_p and theta = 0
+    h = sqrt(EARTH_MU * a * (1 - pow(eccentricity,2)));
 
-    // start loop here
+    // Step 5 is out of order because the first part is not dependent on time (and therfore does not need to be in the loop) but the second part is.
+    // Step 5a: Calculate the Rotation Matrix
+
+    // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
+    double raanRad = deg2rad(raan);
+    double inclinationRad = deg2rad(inclination);
+    double argumentOfPerigeeRad = deg2rad(argumentOfPerigee);
+
+    // Equation 4.49
+    double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
+            {cos(argumentOfPerigeeRad), sin(argumentOfPerigeeRad), 0},
+            {-sin(argumentOfPerigeeRad), cos(argumentOfPerigeeRad), 0},
+            {0, 0, 1},
+    };
+    // Equation 4.32
+    double R_2[NUM_ROWS_Q][NUM_COLS_Q] = {
+            {1, 0 ,0},
+            {0, cos(inclinationRad), sin(inclinationRad)},
+            {0, -sin(inclinationRad), cos(inclinationRad)}
+
+    };
+    // Equation 4.34
+    double R_3[NUM_ROWS_Q][NUM_COLS_Q] = {
+            {cos(raanRad), sin(raanRad), 0},
+            {-sin(raanRad), cos(raanRad), 0},
+            {0, 0, 1},
+    };
+
+    double R_1_2resultMatrix[NUM_ROWS_Q][NUM_COLS_Q]={
+            {0, 0, 0},
+            {0, 0, 0},
+            {0, 0, 0}
+    };
+
+    double Q_Matrix[NUM_ROWS_Q][NUM_COLS_Q]={
+            {0, 0, 0},
+            {0, 0, 0},
+            {0, 0, 0}
+    };
+
+    // Equation 4.49 for next four loops
+    // Perform matrix multiplication R_1 * R_2
+    for (int i = 0; i < NUM_ROWS_Q; i++) {
+        for (int j = 0; j < NUM_COLS_Q; j++) {
+            R_1_2resultMatrix[i][j] = 0; // Initialize the element to 0
+            for (int k = 0; k < NUM_COLS_Q; k++) {
+                R_1_2resultMatrix[i][j] += R_1[i][k] * R_2[k][j];
+            }
+        }
+    }
+
+    // Perform matrix multiplication (R_1 * R_2) * R_3
+    for (int i = 0; i < NUM_ROWS_Q; i++) {
+        for (int j = 0; j < NUM_COLS_Q; j++) {
+            Q_Matrix[i][j] = 0; // Initialize the element to 0
+            for (int k = 0; k < NUM_COLS_Q; k++) {
+                Q_Matrix[i][j] += R_1_2resultMatrix[i][k] * R_3[k][j];
+            }
+        }
+    }
+
+    double Q_Matrix_New[NUM_ROWS_Q][NUM_COLS_Q]= {
+            {0, 0, 0},
+            {0, 0, 0},
+            {0, 0, 0}
+    };
+
+    // Transpose the Q_Matrix
+    for (int i = 0; i < NUM_ROWS_Q; i++) {
+        for (int j = 0; j < NUM_COLS_Q; j++) {
+            Q_Matrix_New[j][i] = Q_Matrix[i][j];
+        }
+    }
 
     while(1) {
 
+        // The current time is needed for steps three and six so it is calculated here
         // Find UTC time
         // Structure ptr gets UTC time
         struct tm *ptr;
@@ -144,208 +254,114 @@ int main() {
         t = time(NULL);
         ptr = gmtime(&t);
 
-        // Assign UTC values to individual variables
-        double year;
-        double month;
-        double day;
-        double UT;
-        year = ptr->tm_year + 1900;
-        month = ptr->tm_mon + 1;
-        day = ptr->tm_mday;
-        UT = (float) ptr->tm_hour + (float) ptr->tm_min / 60 + (float) ptr->tm_sec / 3600;
+        //Curent time in hours
+        double UT = (float) ptr->tm_hour + (float) ptr->tm_min / 60 + (float) ptr->tm_sec / 3600;
+
+        // Step 3: Calculate True Anomaly
 
         double dayOfYear = ptr->tm_yday + 1 + UT/24;
+        // Time since the TLE was observed
+        // Assumes the TLE and current year are the same
         double delta_t = dayOfYear - epoch;
         double delta_MeanAnamoly = delta_t * meanMotion * 360;
 
-        double newMeanAnomaly;
-        newMeanAnomaly = meanAnomaly + delta_MeanAnamoly;
-
-        newMeanAnomaly = fmod(newMeanAnomaly, 360);
-
-        // Convert Mean Anomaly from degrees to radians
-        double meanAnomalyRadians = newMeanAnomaly * M_PI / 180.0;
+        // Calculates current Mean anomaly
+        double meanAnomaly = deg2rad(fmod(TLE_meanAnomaly + delta_MeanAnamoly, 360) );
 
         // Solve Kepler's Equation for Eccentric Anomaly
-        double eccentricAnomaly = solveKeplersEquation(meanAnomalyRadians, eccentricity);
+        double eccentricAnomaly = solveKeplersEquation(meanAnomaly, eccentricity);
 
-        // Step 3: Calculate True Anomaly
+        // Calculate True anomally
         double trueAnomaly = calculateTrueAnomaly(eccentricAnomaly, eccentricity);
 
-        // Step 4: Calculate the position vector in the perifocal frame
-        double r_perifocal[NUM_ROWS_RHO_G][NUM_COLS_RHO_G];
-        double theta = trueAnomaly; // True anomaly is the angle (theta)
-
-        r_perifocal[0][0] = (h * h / mu) * (1 / (1 + eccentricity * cos(theta))) * cos(theta); // x-component
-        r_perifocal[1][0] = (h * h / mu) * (1 / (1 + eccentricity * cos(theta))) * sin(theta); // y-component
+        // Step 4: Calculate position vector in perifocal frame
+        double r_perifocal[NUM_ROWS_VECTOR][NUM_COLS_VECTOR];
+        // Equation 2.119
+        r_perifocal[0][0] = (h * h / EARTH_MU) * (1 / (1 + eccentricity * cos(trueAnomaly))) * cos(trueAnomaly); // x-component
+        r_perifocal[1][0] = (h * h / EARTH_MU) * (1 / (1 + eccentricity * cos(trueAnomaly))) * sin(trueAnomaly); // y-component
         r_perifocal[2][0] = 0; // z-component
 
-        // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
-        double raanRad = raan * M_PI / 180.0;
-        double inclinationRad = inclination * M_PI / 180.0;
-        double argumentOfPerigeeRad = argumentOfPerigee * M_PI / 180.0;
+        //Step 5: Rotate position vector to geo equatorial frame
+        //      5b: Multiply the position vector and Rotation Matrix
 
-        // Step 5: Switching from the perifocal frame to the geocentric equatorial frame
-        double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
-                {cos(argumentOfPerigeeRad), sin(argumentOfPerigeeRad), 0},
-                {-sin(argumentOfPerigeeRad), cos(argumentOfPerigeeRad), 0},
-                {0, 0, 1},
-        };
-        double R_2[NUM_ROWS_Q][NUM_COLS_Q] = {
-                {1, 0 ,0},
-                {0, cos(inclinationRad), sin(inclinationRad)},
-                {0, -sin(inclinationRad), cos(inclinationRad)}
-
-        };
-        double R_3[NUM_ROWS_Q][NUM_COLS_Q] = {
-                {cos(raanRad), sin(raanRad), 0},
-                {-sin(raanRad), cos(raanRad), 0},
-                {0, 0, 1},
-        };
-
-        double R_1_2resultMatrix[NUM_ROWS_Q][NUM_COLS_Q]={
-                {0, 0, 0},
-                {0, 0, 0},
-                {0, 0, 0}
-        };
-
-        double Q_Matrix[NUM_ROWS_Q][NUM_COLS_Q]={
-                {0, 0, 0},
-                {0, 0, 0},
-                {0, 0, 0}
-        };
-
-        // Perform matrix multiplication R_1 * R_2
-            for (int i = 0; i < NUM_ROWS_Q; i++) {
-                for (int j = 0; j < NUM_COLS_Q; j++) {
-                    R_1_2resultMatrix[i][j] = 0; // Initialize the element to 0
-                    for (int k = 0; k < NUM_COLS_Q; k++) {
-                        R_1_2resultMatrix[i][j] += R_1[i][k] * R_2[k][j];
-                    }
-                }
-            }
-
-        // Perform matrix multiplication (R_1 * R_2) * R_3
-        for (int i = 0; i < NUM_ROWS_Q; i++) {
-            for (int j = 0; j < NUM_COLS_Q; j++) {
-                Q_Matrix[i][j] = 0; // Initialize the element to 0
-                for (int k = 0; k < NUM_COLS_Q; k++) {
-                    Q_Matrix[i][j] += R_1_2resultMatrix[i][k] * R_3[k][j];
-                }
-            }
-        }
-
-        double Q_Matrix_New[NUM_ROWS_Q][NUM_COLS_Q]= {
-                {0, 0, 0},
-                {0, 0, 0},
-                {0, 0, 0}
-        };
-
-        // Transpose the Q_Matrix
-        for (int i = 0; i < NUM_ROWS_Q; i++) {
-            for (int j = 0; j < NUM_COLS_Q; j++) {
-                Q_Matrix_New[j][i] = Q_Matrix[i][j];
-            }
-        }
-
-        // Initialize the geocentric equatorial frame position vector
-        double r_geocentric[NUM_ROWS_Q][NUM_COLS_RHO_G] = {
+        // Calculate the geocentric equatorial frame position vector
+        // Equation 4.51
+        double r_geocentric[NUM_ROWS_Q][NUM_COLS_VECTOR] = {
                 {Q_Matrix_New[0][0] * r_perifocal[0][0] + Q_Matrix_New[0][1] * r_perifocal[1][0] +Q_Matrix_New[0][2] * r_perifocal[2][0]},
                 {Q_Matrix_New[1][0] * r_perifocal[0][0] + Q_Matrix_New[1][1] * r_perifocal[1][0] +Q_Matrix_New[1][2] * r_perifocal[2][0]},
                 {Q_Matrix_New[2][0] * r_perifocal[0][0] + Q_Matrix_New[2][1] * r_perifocal[1][0] +Q_Matrix_New[2][2] * r_perifocal[2][0]}
         };
 
-        // End cooper Code
+        //Step 6: Calculate sidereal time
 
-        // Start CJ Code
-
-        /* Step 6 - Calculate sidereal time
-         * Find UTC time
-         * Convert to Julian time
-         * Calculate Greenwich sidereal time
-         * Calculate local sidereal time */
-
-        // Julian time.
-        double J_O = 367 * year - floor((7 * (year+floor((month + 9)/12))) / 4) + floor((275 * month) / 9) + day + 1721013.5;
+        // Convert UTC time into Julian time
+        // Equation 5.48
+        double J_O = 367 * (ptr->tm_year + 1900) - floor((7 * ((ptr->tm_year + 1900)+floor(((ptr->tm_mon + 1) + 9)/12))) / 4) + floor((275 * (ptr->tm_mon + 1)) / 9) + ptr->tm_mday + 1721013.5;
+        // Equation 5.49
         double T_O = (J_O - 2451545) / 36525;
 
-        // Greenwich sidereal time
+        // Convert Julian time into Greenwich sidereal time
+        // Equation 5.50
         double greenwich_sidereal_time_0 =
                 100.4606184 + 36000.77004 * T_O + 0.000387933 * pow(T_O, 2) - 2.583 * pow(10, -8) * pow(T_O, 3);
+        //Equation 5.51
         double greenwich_sidereal_time = greenwich_sidereal_time_0 + 360.98564724 * UT / 24;
 
-        // local sidereal time
+        // Add longitude to get local sidereal time
+        // Equation 5.52
         double sidereal_time = greenwich_sidereal_time + longitude;
         sidereal_time = fmod(sidereal_time, 360);
 
-        /* Step 7 - Calculate Observer Position in Geocentric Equatorial Frame
-         * Values of shape of earth are given and constant
-         * Convert latitude and sidereal time to radians to be used in cos and sin
-         * Compute observer position
-         * */
+        // Step 7: Calculate station position in geo equatorial frame
 
-        // flattening of the earth
-        double f = 0.003353;
-        // Equatorial radius of the earth in km
-        double R_e = 6378;
+        // Convert sidereal time to radians
+        sidereal_time = deg2rad(sidereal_time) ;
 
-        // Convert lat and sidereal to radians
-        double latitudeRad = latitude / 180 * M_PI;
-        sidereal_time = sidereal_time / 180 * M_PI;
-
-        // Observer position
+        // Calculate observer position
         double R[3][1];
-        R[0][0] = (R_e / (sqrt(1 - (2 * f - pow(f, 2)) * pow(sin(latitudeRad), 2))) + altitude) * cos(latitudeRad) *
+        // Equation 5.56
+        R[0][0] = (EARTH_RADIUS_EQUATORIAL / (sqrt(1 - (2 * EARTH_FLATTENING - pow(EARTH_FLATTENING, 2)) * pow(sin(latitude), 2))) + altitude) * cos(latitude) *
                   cos(sidereal_time);
-        R[1][0] = (R_e / (sqrt(1 - (2 * f - pow(f, 2)) * pow(sin(latitudeRad), 2))) + altitude) * cos(latitudeRad) *
+        R[1][0] = (EARTH_RADIUS_EQUATORIAL / (sqrt(1 - (2 * EARTH_FLATTENING - pow(EARTH_FLATTENING, 2)) * pow(sin(latitude), 2))) + altitude) * cos(latitude) *
                   sin(sidereal_time);
-        R[2][0] = ((R_e * pow((1 - f), 2)) / (sqrt(1 - (2 * f - pow(f, 2)) * pow(sin(latitudeRad), 2))) + altitude) *
-                  sin(latitudeRad);
+        R[2][0] = ((EARTH_RADIUS_EQUATORIAL * pow((1 - EARTH_FLATTENING), 2)) / (sqrt(1 - (2 * EARTH_FLATTENING - pow(EARTH_FLATTENING, 2)) * pow(sin(latitude), 2))) + altitude) *
+                  sin(latitude);
 
-        /* Step 8 - Calculate relative position vector of sat to station
-         * Subtract the Observer position from the satellite position
-         * */
+        // Step 8: Calculate relative position of satellite to station
 
-        double rho_G[3][1];
+        double rho_G[NUM_ROWS_VECTOR][NUM_COLS_VECTOR];
         rho_G[0][0] = r_geocentric[0][0] - R[0][0];
         rho_G[1][0] = r_geocentric[1][0] - R[1][0];
         rho_G[2][0] = r_geocentric[2][0] - R[2][0];
 
-        /* Step 9 - Calculate azimuth and Elevation
-         * Make rotation matrix
-         * multiply rho by rotation matrix
-         * find unit vector of relative position vector
-         * convert unit vector to Azimuth + Elevation
-         * */
+        // Step 9: Calculate Azimuth and Elevation
 
         // Make the rotation matrix
-        double Q_2[3][3];
-
+        double Q_2[NUM_ROWS_Q][NUM_COLS_Q];
+        // Equation 5.62a
         Q_2[0][0] = -sin(sidereal_time);
         Q_2[0][1] = cos(sidereal_time);
         Q_2[0][2] = 0;
-        Q_2[1][0] = -sin(latitudeRad) * cos(sidereal_time);
-        Q_2[1][1] = -sin(latitudeRad) * sin(sidereal_time);
-        Q_2[1][2] = cos(latitudeRad);
-        Q_2[2][0] = cos(latitudeRad) * cos(sidereal_time);
-        Q_2[2][1] = cos(latitudeRad) * sin(sidereal_time);
-        Q_2[2][2] = sin(latitudeRad);
+        Q_2[1][0] = -sin(latitude) * cos(sidereal_time);
+        Q_2[1][1] = -sin(latitude) * sin(sidereal_time);
+        Q_2[1][2] = cos(latitude);
+        Q_2[2][0] = cos(latitude) * cos(sidereal_time);
+        Q_2[2][1] = cos(latitude) * sin(sidereal_time);
+        Q_2[2][2] = sin(latitude);
 
-        // Multiplies the arrays Q and rho_G to get new array rho_R
         double rho_R[NUM_ROWS(Q_2)][NUM_COLS(rho_G)];
-        int i, j, k;
 
-        // Initializing elements of matrix to 0.
-        for (i = 0; i < NUM_ROWS(Q_2); ++i) {
-            for (j = 0; j < NUM_COLS(rho_G); ++j) {
+        // Initializing elements of rho_R to 0.
+        for (int i = 0; i < NUM_ROWS(Q_2); ++i) {
+            for (int j = 0; j < NUM_COLS(rho_G); ++j) {
                 rho_R[i][j] = 0;
             }
         }
 
-        // Multiplying matrix array1 and array2 and storing in array.
-        for (i = 0; i < NUM_ROWS(Q_2); ++i) {
-            for (j = 0; j < NUM_COLS(rho_G); ++j) {
-                for (k = 0; k < NUM_COLS(Q_2); ++k) {
+        // Multiplying arrays Q_2 and rho_G to get rho_R
+        for (int i = 0; i < NUM_ROWS(Q_2); ++i) {
+            for (int j = 0; j < NUM_COLS(rho_G); ++j) {
+                for (int k = 0; k < NUM_COLS(Q_2); ++k) {
                     rho_R[i][j] += Q_2[i][k] * rho_G[k][j];
                 }
             }
@@ -357,20 +373,15 @@ int main() {
         rho_R[1][0] = rho_R[1][0] / rho_size;
         rho_R[2][0] = rho_R[2][0] / rho_size;
 
-        // convert unit vector to Azimuth + Elevation
+        // convert unit vector to Azimuth and Elevation
+        // Variations of Equation 5.58
         double Elevation = asin(rho_R[2][0]);
         double Azimuth = acos(rho_R[1][0] / cos(Elevation));
         if ((double) rho_R[0][0] / cos(Elevation) < 0) {
             Azimuth = 2 * M_PI - Azimuth;
         }
 
-        // Convert from radians to degrees
-        double elevationRad = Elevation * 180 / M_PI;
-        double azimuthRad = Azimuth * 180 / M_PI;
-
-        /* Step 10 - Check
-         * Check z height
-         * */
+        // Step 10: Check if Elevation is above horizon
 
         if (rho_R[2][0] < 0) {
             printf("Move to Home\n");
@@ -378,8 +389,8 @@ int main() {
             printf("Move to Coordinates\n");
         }
 
-        printf("Azimuth: %f\n", azimuthRad);
-        printf("Elevation: %f\n", elevationRad);
+        printf("Azimuth: %f\n", rad2deg(Azimuth));
+        printf("Elevation: %f\n", rad2deg(Elevation));
 
         int azimuthInt = floor(azimuthRad);
         int elevationInt = floor(elevationRad);
