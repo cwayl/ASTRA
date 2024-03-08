@@ -151,7 +151,7 @@ int main() {
     TLE_meanAnomaly = 230.7355;
     meanMotion = 15.21206633161949;
 
-    // Convert latitude to radians for future calulations
+    // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
 
     // Step 2: Calculate h (specific angular momentum)
@@ -170,7 +170,7 @@ int main() {
     // Substituting Equation 2.73 we can set r = r_p and theta = 0
     h = sqrt(EARTH_MU * a * (1 - pow(eccentricity,2)));
 
-    // Step 5 is out of order because the first part is not dependent on time (and therfore does not need to be in the loop) but the second part is.
+    // Step 5 is out of order because the first part is not dependent on time (and therefore does not need to be in the loop) but the second part is.
     // Step 5a: Calculate the Rotation Matrix
 
     // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
@@ -246,7 +246,7 @@ int main() {
 
     while(1) {
 
-        // The current time is needed for steps three and six so it is calculated here
+        // The current time is needed for steps three and six, so it is calculated here
         // Find UTC time
         // Structure ptr gets UTC time
         struct tm *ptr;
@@ -254,7 +254,7 @@ int main() {
         t = time(NULL);
         ptr = gmtime(&t);
 
-        //Curent time in hours
+        //Current time in hours
         double UT = (float) ptr->tm_hour + (float) ptr->tm_min / 60 + (float) ptr->tm_sec / 3600;
 
         // Step 3: Calculate True Anomaly
@@ -271,7 +271,7 @@ int main() {
         // Solve Kepler's Equation for Eccentric Anomaly
         double eccentricAnomaly = solveKeplersEquation(meanAnomaly, eccentricity);
 
-        // Calculate True anomally
+        // Calculate True anomaly
         double trueAnomaly = calculateTrueAnomaly(eccentricAnomaly, eccentricity);
 
         // Step 4: Calculate position vector in perifocal frame
