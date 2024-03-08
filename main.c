@@ -114,20 +114,19 @@ int main() {
     longitude = -111.830846;
     altitude = 1.382;
     epochYear = 2024;
-    epoch = 67.57228056;
-    inclination = 97.4392;
-    raan = 135.6059;
-    eccentricity = 0.0012184;
-    argumentOfPerigee = 275.9347;
-    TLE_meanAnomaly = 84.0499;
-    meanMotion = 15.19538102;
+    epoch = 67.61470730;
+    inclination = 97.4731;
+    raan = 326.7464;
+    eccentricity = 0.0016921;
+    argumentOfPerigee = 129.5379;
+    TLE_meanAnomaly = 230.7355;
+    meanMotion = 15.21206633161949;
 
     // Convert latitude to radians for future calulations
     latitude = deg2rad(latitude);
 
     // Step 2: Calculate h (specific angular momentum)
 
-    // Constants
     double a; // Semi-major axis
     double h; // specific angular momentum
     double n; // Mean Motion in radians per second
@@ -138,13 +137,14 @@ int main() {
     a = pow(EARTH_MU / pow(n, 2), 1.0 / 3.0);
     h = sqrt(EARTH_MU * a * (1 - pow(eccentricity,2)));
 
-    // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
-    double raanRad = raan * M_PI / 180.0;
-    double inclinationRad = inclination * M_PI / 180.0;
-    double argumentOfPerigeeRad = argumentOfPerigee * M_PI / 180.0;
-
     // Step 5 is out of order because the first part is not dependent on time (and therfore does not need to be in the loop) but the second part is.
     // Step 5a: Calculate the Rotation Matrix
+
+    // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
+    double raanRad = deg2rad(raan);
+    double inclinationRad = deg2rad(inclination);
+    double argumentOfPerigeeRad = deg2rad(argumentOfPerigee);
+
     double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
             {cos(argumentOfPerigeeRad), sin(argumentOfPerigeeRad), 0},
             {-sin(argumentOfPerigeeRad), cos(argumentOfPerigeeRad), 0},
@@ -228,7 +228,7 @@ int main() {
         double delta_MeanAnamoly = delta_t * meanMotion * 360;
 
         // Calculates current Mean anomaly
-        double meanAnomaly = rad2deg(fmod(TLE_meanAnomaly + delta_MeanAnamoly, 360));
+        double meanAnomaly = deg2rad(fmod(TLE_meanAnomaly + delta_MeanAnamoly, 360) );
 
         // Solve Kepler's Equation for Eccentric Anomaly
         double eccentricAnomaly = solveKeplersEquation(meanAnomaly, eccentricity);
