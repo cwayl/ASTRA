@@ -134,7 +134,11 @@ int main() {
     // Convert Mean Motion from revolutions per day to radians per second
     n = meanMotion * (2 * M_PI) / (24 * 3600);
 
+    // Equation 2.83 solved for a
+    // Substituting Equation 3.9 for T
     a = pow(EARTH_MU / pow(n, 2), 1.0 / 3.0);
+    // Equation 2.45 solved for h
+    // Substituting Equation 2.73 we can set r = r_p and theta = 0
     h = sqrt(EARTH_MU * a * (1 - pow(eccentricity,2)));
 
     // Step 5 is out of order because the first part is not dependent on time (and therfore does not need to be in the loop) but the second part is.
@@ -145,17 +149,20 @@ int main() {
     double inclinationRad = deg2rad(inclination);
     double argumentOfPerigeeRad = deg2rad(argumentOfPerigee);
 
+    // Equation 4.49
     double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
             {cos(argumentOfPerigeeRad), sin(argumentOfPerigeeRad), 0},
             {-sin(argumentOfPerigeeRad), cos(argumentOfPerigeeRad), 0},
             {0, 0, 1},
     };
+    // Equation 4.32
     double R_2[NUM_ROWS_Q][NUM_COLS_Q] = {
             {1, 0 ,0},
             {0, cos(inclinationRad), sin(inclinationRad)},
             {0, -sin(inclinationRad), cos(inclinationRad)}
 
     };
+    // Equation 4.34
     double R_3[NUM_ROWS_Q][NUM_COLS_Q] = {
             {cos(raanRad), sin(raanRad), 0},
             {-sin(raanRad), cos(raanRad), 0},
@@ -174,6 +181,7 @@ int main() {
             {0, 0, 0}
     };
 
+    // Equation 4.49 for next four loops
     // Perform matrix multiplication R_1 * R_2
     for (int i = 0; i < NUM_ROWS_Q; i++) {
         for (int j = 0; j < NUM_COLS_Q; j++) {
@@ -224,6 +232,7 @@ int main() {
 
         double dayOfYear = ptr->tm_yday + 1 + UT/24;
         // Time since the TLE was observed
+        // Assumes the TLE and current year are the same
         double delta_t = dayOfYear - epoch;
         double delta_MeanAnamoly = delta_t * meanMotion * 360;
 
@@ -238,7 +247,7 @@ int main() {
 
         // Step 4: Calculate position vector in perifocal frame
         double r_perifocal[NUM_ROWS_VECTOR][NUM_COLS_VECTOR];
-
+        // Equation 2.119
         r_perifocal[0][0] = (h * h / EARTH_MU) * (1 / (1 + eccentricity * cos(trueAnomaly))) * cos(trueAnomaly); // x-component
         r_perifocal[1][0] = (h * h / EARTH_MU) * (1 / (1 + eccentricity * cos(trueAnomaly))) * sin(trueAnomaly); // y-component
         r_perifocal[2][0] = 0; // z-component
@@ -246,7 +255,8 @@ int main() {
         //Step 5: Rotate position vector to geo equatorial frame
         //      5b: Multiply the position vector and Rotation Matrix
 
-        // Initialize the geocentric equatorial frame position vector
+        // Calculate the geocentric equatorial frame position vector
+        // Equation 4.51
         double r_geocentric[NUM_ROWS_Q][NUM_COLS_VECTOR] = {
                 {Q_Matrix_New[0][0] * r_perifocal[0][0] + Q_Matrix_New[0][1] * r_perifocal[1][0] +Q_Matrix_New[0][2] * r_perifocal[2][0]},
                 {Q_Matrix_New[1][0] * r_perifocal[0][0] + Q_Matrix_New[1][1] * r_perifocal[1][0] +Q_Matrix_New[1][2] * r_perifocal[2][0]},
@@ -256,15 +266,20 @@ int main() {
         //Step 6: Calculate sidereal time
 
         // Convert UTC time into Julian time
+        // Equation 5.48
         double J_O = 367 * (ptr->tm_year + 1900) - floor((7 * ((ptr->tm_year + 1900)+floor(((ptr->tm_mon + 1) + 9)/12))) / 4) + floor((275 * (ptr->tm_mon + 1)) / 9) + ptr->tm_mday + 1721013.5;
+        // Equation 5.49
         double T_O = (J_O - 2451545) / 36525;
 
         // Convert Julian time into Greenwich sidereal time
+        // Equation 5.50
         double greenwich_sidereal_time_0 =
                 100.4606184 + 36000.77004 * T_O + 0.000387933 * pow(T_O, 2) - 2.583 * pow(10, -8) * pow(T_O, 3);
+        //Equation 5.51
         double greenwich_sidereal_time = greenwich_sidereal_time_0 + 360.98564724 * UT / 24;
 
         // Add longitude to get local sidereal time
+        // Equation 5.52
         double sidereal_time = greenwich_sidereal_time + longitude;
         sidereal_time = fmod(sidereal_time, 360);
 
@@ -273,8 +288,9 @@ int main() {
         // Convert sidereal time to radians
         sidereal_time = deg2rad(sidereal_time) ;
 
-        // Observer position
+        // Calculate observer position
         double R[3][1];
+        // Equation 5.56
         R[0][0] = (EARTH_RADIUS_EQUATORIAL / (sqrt(1 - (2 * EARTH_FLATTENING - pow(EARTH_FLATTENING, 2)) * pow(sin(latitude), 2))) + altitude) * cos(latitude) *
                   cos(sidereal_time);
         R[1][0] = (EARTH_RADIUS_EQUATORIAL / (sqrt(1 - (2 * EARTH_FLATTENING - pow(EARTH_FLATTENING, 2)) * pow(sin(latitude), 2))) + altitude) * cos(latitude) *
@@ -293,7 +309,7 @@ int main() {
 
         // Make the rotation matrix
         double Q_2[NUM_ROWS_Q][NUM_COLS_Q];
-
+        // Equation 5.62a
         Q_2[0][0] = -sin(sidereal_time);
         Q_2[0][1] = cos(sidereal_time);
         Q_2[0][2] = 0;
@@ -304,7 +320,6 @@ int main() {
         Q_2[2][1] = cos(latitude) * sin(sidereal_time);
         Q_2[2][2] = sin(latitude);
 
-        // Multiplies the arrays Q and rho_G to get new array rho_R
         double rho_R[NUM_ROWS(Q_2)][NUM_COLS(rho_G)];
 
         // Initializing elements of rho_R to 0.
@@ -330,15 +345,12 @@ int main() {
         rho_R[2][0] = rho_R[2][0] / rho_size;
 
         // convert unit vector to Azimuth and Elevation
+        // Variations of Equation 5.58
         double Elevation = asin(rho_R[2][0]);
         double Azimuth = acos(rho_R[1][0] / cos(Elevation));
         if ((double) rho_R[0][0] / cos(Elevation) < 0) {
             Azimuth = 2 * M_PI - Azimuth;
         }
-
-        // Convert from radians to degrees
-        Elevation = rad2deg(Elevation);
-        Azimuth = rad2deg(Azimuth);
 
         // Step 10: Check if Elevation is above horizon
 
@@ -348,8 +360,8 @@ int main() {
             printf("Move to Coordinates\n");
         }
 
-        printf("Azimuth: %f\n", Azimuth);
-        printf("Elevation: %f\n", Elevation);
+        printf("Azimuth: %f\n", rad2deg(Azimuth));
+        printf("Elevation: %f\n", rad2deg(Elevation));
 
         sleep(1);
 
