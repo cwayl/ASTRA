@@ -392,8 +392,8 @@ int main() {
         printf("Azimuth: %f\n", rad2deg(Azimuth));
         printf("Elevation: %f\n", rad2deg(Elevation));
 
-        int azimuthInt = floor(azimuthRad);
-        int elevationInt = floor(elevationRad);
+        int azimuthInt = floor(rad2deg(Azimuth));
+        int elevationInt = floor(rad2deg(Elevation));
 
         char client_message[8];
         snprintf(client_message, sizeof(client_message), "P %d %d", azimuthInt, elevationInt);
