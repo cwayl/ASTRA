@@ -79,6 +79,7 @@ int main() {
 */
 
 
+
     latitude = 41.737878;
     longitude = -111.830846;
     altitude = 1.382;
@@ -343,7 +344,6 @@ int main() {
          * Check z height
          * */
 
-
         if (rho_R[0][0] < 0) {
             printf("Move to Home\n");
         } else {
@@ -352,6 +352,7 @@ int main() {
 
         printf("Azimuth: %f\n", azimuthRad);
         printf("Elevation: %f\n", elevationRad);
+
 
 
         sleep(1);
