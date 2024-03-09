@@ -19,7 +19,6 @@
 #include <string.h>
 #include "orbital_Numbers.h"
 
-
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define NUM_ROWS(a) ARRAYSIZE(a)
 #define NUM_COLS(a) ARRAYSIZE((a)[0])
@@ -29,7 +28,6 @@
 #define NUM_COLS_Q 3 // Number of columns in Q
 #define NUM_ROWS_VECTOR 3 // Number of rows in a vector
 #define NUM_COLS_VECTOR 1 // Number of columns in a vector
-
 
 // Function prototypes
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
@@ -79,7 +77,6 @@ int main() {
         return -1;
     }
     printf("Connected with server successfully\n");
-
 
     // Define variables for user input
     double latitude, longitude, altitude;
@@ -137,7 +134,6 @@ int main() {
     meanAnomaly = 53.9993;
     meanMotion = 15.19316519;
 */
-
 
     latitude = 41.737878;
     longitude = -111.830846;
@@ -395,11 +391,11 @@ int main() {
         int azimuthInt = floor(rad2deg(Azimuth));
         int elevationInt = floor(rad2deg(Elevation));
 
-        char client_message[8];
-        snprintf(client_message, sizeof(client_message), "P %d %d", azimuthInt, elevationInt);
+        char client_message[20];
+        snprintf(client_message, sizeof(client_message), "P %d %d \r", azimuthInt, elevationInt);
 
         // Send the message to server:
-        if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
+        if(send(socket_desc, client_message, strlen(client_message),0) < 0){
             printf("Unable to send message\n");
             return -1;
         }
@@ -416,7 +412,7 @@ int main() {
 
 double solveKeplersEquation(double meanAnomalyRadians, double eccentricity){
     double E_0;
-    // inital values from Matt Harris lecture notes page 5.12
+    // Initial values from Matt Harris lecture notes page 5.12
     if (meanAnomalyRadians < M_PI){
         E_0 = meanAnomalyRadians + eccentricity/2;
     }
