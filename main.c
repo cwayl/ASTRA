@@ -393,7 +393,7 @@ int main() {
         int azimuthInt = floor(rad2deg(Azimuth));
         int elevationInt = floor(rad2deg(Elevation));
 
-        char client_message[20];
+        char client_message[32];
         snprintf(client_message, sizeof(client_message), "P %d %d \r", azimuthInt, elevationInt);
 
         // Send the message to server:
