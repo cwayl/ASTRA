@@ -395,26 +395,26 @@ int main() {
         int azimuthInt = floor(rad2deg(Azimuth));
         int elevationInt = floor(rad2deg(Elevation));
 
-        char client_message[32];
-        snprintf(client_message, sizeof(client_message), "P %d %d", azimuthInt, elevationInt);
+        struct MessageData {
+            char prefix;
+            int azimuth;
+            int elevation;
+        };
+
+        struct MessageData msgData;
+        msgData.prefix = 'P';
+        msgData.azimuth = azimuthInt;
+        msgData.elevation = elevationInt;
+
+        char client_message[50];
+        snprintf(client_message, sizeof(client_message), "%c %d %d", msgData.prefix, msgData.azimuth, msgData.elevation);
 
         // Send the message to server:
-
-        ssize_t bytes_sent = send(socket_desc, client_message, strlen(client_message) + 1, 0);
-        if(bytes_sent < 0){
-            printf("Unable to send message\n");
-            return -1;
-        } else if (bytes_sent != strlen(client_message) + 1) {
-            printf("Not all bytes were sent\n");
-            return -1;
-        }
-
-        /*
         if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
             printf("Unable to send message\n");
             return -1;
         }
-*/
+
         sleep(1);
 
     }
