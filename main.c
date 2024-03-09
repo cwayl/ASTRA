@@ -19,6 +19,7 @@ int DEBUG = 1;
 #include <arpa/inet.h>
 #include <string.h>
 #include "orbital_Numbers.h"
+#include <stdlib.h>
 
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
@@ -419,13 +420,10 @@ int main() {
             return -1;
         }
 
-        if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
-            printf("Unable to send message\n");
-            return -1;
-        }
-
         sleep(1);
 
+        //Running the shell script?
+        system("/home/astra/ASTRA/name of shell script");
     }
 
     close(socket_desc);
