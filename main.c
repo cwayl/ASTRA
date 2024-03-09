@@ -9,6 +9,7 @@
  *   by Howard d. Curtis
  *
  */
+int DEBUG = 1;
 
 #include <stdio.h>
 #include <math.h>
@@ -18,7 +19,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include "orbital_Numbers.h"
-
+#include <stdlib.h>
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define NUM_ROWS(a) ARRAYSIZE(a)
@@ -29,7 +30,6 @@
 #define NUM_COLS_Q 3 // Number of columns in Q
 #define NUM_ROWS_VECTOR 3 // Number of rows in a vector
 #define NUM_COLS_VECTOR 1 // Number of columns in a vector
-
 
 // Function prototypes
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
@@ -55,6 +55,7 @@ int main() {
      */
 
     // Step 1: Input TLE/Station Info
+   /*
     int socket_desc;
     struct sockaddr_in server_addr;
     char server_message[2000];
@@ -79,7 +80,7 @@ int main() {
         return -1;
     }
     printf("Connected with server successfully\n");
-
+*/
 
     // Define variables for user input
     double latitude, longitude, altitude;
@@ -137,7 +138,6 @@ int main() {
     meanAnomaly = 53.9993;
     meanMotion = 15.19316519;
 */
-
 
     latitude = 41.737878;
     longitude = -111.830846;
@@ -395,28 +395,50 @@ int main() {
         int azimuthInt = floor(rad2deg(Azimuth));
         int elevationInt = floor(rad2deg(Elevation));
 
-        char client_message[8];
-        snprintf(client_message, sizeof(client_message), "P %d %d", azimuthInt, elevationInt);
+        char client_message[32];
+        snprintf(client_message, sizeof(client_message), "P %d %d \r", azimuthInt, elevationInt);
+/*
+        struct MessageData {
+            char prefix;
+            int azimuth;
+            int elevation;
+        };
+
+        struct MessageData msgData;
+        msgData.prefix = 'P';
+        msgData.azimuth = azimuthInt;
+        msgData.elevation = elevationInt;
+
+        char client_message[50];
+        snprintf(client_message, sizeof(client_message), "%c %d %d", msgData.prefix, msgData.azimuth, msgData.elevation);
+        if (DEBUG = 1){
+            printf("%s", client_message);
+        }
 
         // Send the message to server:
-        if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
+        if(read(socket_desc, client_message, strlen(client_message)) < 0){
             printf("Unable to send message\n");
             return -1;
-        }
+        }*/
+
+        char scriptMessage[50];
+        snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d ", (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
+        system(scriptMessage);
 
         sleep(1);
 
+        //Running the shell script?
+        system("/home/astra/ASTRA/name of shell script");
     }
 
-    close(socket_desc);
-    // End CJ Code
+    // close(socket_desc);
 
     return 0;
 }
 
 double solveKeplersEquation(double meanAnomalyRadians, double eccentricity){
     double E_0;
-    // inital values from Matt Harris lecture notes page 5.12
+    // Initial values from Matt Harris lecture notes page 5.12
     if (meanAnomalyRadians < M_PI){
         E_0 = meanAnomalyRadians + eccentricity/2;
     }
