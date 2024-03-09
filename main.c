@@ -414,7 +414,7 @@ int main() {
         }
 
         // Send the message to server:
-        if(read(4533, client_message, strlen(client_message) + 1) < 0){
+        if(read(socket_desc, client_message, strlen(client_message)) < 0){
             printf("Unable to send message\n");
             return -1;
         }
