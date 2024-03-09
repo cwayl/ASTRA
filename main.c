@@ -78,6 +78,7 @@ int main() {
     }
     printf("Connected with server successfully\n");
 
+
     // Define variables for user input
     double latitude, longitude, altitude;
     int epochYear;
@@ -134,6 +135,7 @@ int main() {
     meanAnomaly = 53.9993;
     meanMotion = 15.19316519;
 */
+
 
     latitude = 41.737878;
     longitude = -111.830846;
