@@ -419,6 +419,11 @@ int main() {
             return -1;
         }
 
+        if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
+            printf("Unable to send message\n");
+            return -1;
+        }
+
         sleep(1);
 
     }
