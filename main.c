@@ -411,11 +411,10 @@ int main() {
         snprintf(client_message, sizeof(client_message), "%c %d %d", msgData.prefix, msgData.azimuth, msgData.elevation);
         if (DEBUG = 1){
             printf("%s", client_message);
-
         }
 
         // Send the message to server:
-        if(write(socket_desc, client_message, strlen(client_message) + 1) < 0){
+        if(write(4533, client_message, strlen(client_message) + 1) < 0){
             printf("Unable to send message\n");
             return -1;
         }
