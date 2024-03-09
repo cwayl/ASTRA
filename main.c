@@ -143,13 +143,13 @@ int main() {
     longitude = -111.830846;
     altitude = 1.382;
     epochYear = 2024;
-    epoch = 67.61470730;
-    inclination = 97.4731;
-    raan = 326.7464;
-    eccentricity = 0.0016921;
-    argumentOfPerigee = 129.5379;
-    TLE_meanAnomaly = 230.7355;
-    meanMotion = 15.21206633161949;
+    epoch = 68.31916512;
+    inclination = 120.5010;
+    raan = 148.2824;
+    eccentricity = 0.0191697;
+    argumentOfPerigee = 222.3182;
+    TLE_meanAnomaly = 136.2948;
+    meanMotion = 14.97213485550764;
 
     // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
