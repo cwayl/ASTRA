@@ -57,6 +57,7 @@ int main() {
      */
 
     // Step 1: Input TLE/Station Info
+   /*
     int socket_desc;
     struct sockaddr_in server_addr;
     char server_message[2000];
@@ -81,7 +82,7 @@ int main() {
         return -1;
     }
     printf("Connected with server successfully\n");
-
+*/
 
     // Define variables for user input
     double latitude, longitude, altitude;
@@ -396,7 +397,7 @@ int main() {
 
         int azimuthInt = floor(rad2deg(Azimuth));
         int elevationInt = floor(rad2deg(Elevation));
-
+/*
         struct MessageData {
             char prefix;
             int azimuth;
@@ -418,16 +419,18 @@ int main() {
         if(read(socket_desc, client_message, strlen(client_message)) < 0){
             printf("Unable to send message\n");
             return -1;
-        }
+        }*/
+
+        char scriptMessage[50];
+        snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d ", (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
+        system(scriptMessage);
 
         sleep(1);
 
         //Running the shell script?
-        system("/home/astra/ASTRA/name of shell script");
     }
 
-    close(socket_desc);
-    // End CJ Code
+    // close(socket_desc);
 
     return 0;
 }
