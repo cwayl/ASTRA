@@ -9,6 +9,7 @@
  *   by Howard d. Curtis
  *
  */
+int DEBUG = 1;
 
 #include <stdio.h>
 #include <math.h>
@@ -408,9 +409,13 @@ int main() {
 
         char client_message[50];
         snprintf(client_message, sizeof(client_message), "%c %d %d", msgData.prefix, msgData.azimuth, msgData.elevation);
+        if (DEBUG = 1){
+            printf("%s", client_message);
+
+        }
 
         // Send the message to server:
-        if(write(socket_desc, client_message, strlen(client_message)) < 0){
+        if(write(socket_desc, client_message, strlen(client_message) + 1) < 0){
             printf("Unable to send message\n");
             return -1;
         }
