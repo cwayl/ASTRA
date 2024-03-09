@@ -385,15 +385,25 @@ int main() {
         }
 
         // Step 10: Check if Elevation is above horizon
-
+        char scriptMessage[50];
+        int atHome = 0;
         if (rho_R[2][0] < 0) {
+            if (atHome = 0){
+                snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh 180 0");
+                atHome = 1;
+            }
             printf("Move to Home\n");
         } else {
+            atHome = 0;
+            snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d ", (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
             printf("Move to Coordinates\n");
         }
 
         printf("Azimuth: %f\n", rad2deg(Azimuth));
         printf("Elevation: %f\n", rad2deg(Elevation));
+
+        system(scriptMessage);
+
 
         int azimuthInt = floor(rad2deg(Azimuth));
         int elevationInt = floor(rad2deg(Elevation));
@@ -421,9 +431,6 @@ int main() {
             return -1;
         }*/
 
-        char scriptMessage[50];
-        snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d ", (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
-        system(scriptMessage);
 
         sleep(1);
 
