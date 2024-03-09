@@ -394,10 +394,10 @@ int main() {
         int elevationInt = floor(rad2deg(Elevation));
 
         char client_message[32];
-        snprintf(client_message, sizeof(client_message), "P %d %d \r", azimuthInt, elevationInt);
+        snprintf(client_message, sizeof(client_message), "P %d %d sys\r", azimuthInt, elevationInt);
 
         // Send the message to server:
-        if(send(socket_desc, client_message, strlen(client_message),0) < 0){
+        if(write(socket_desc, client_message, strlen(client_message)) < 0){
             printf("Unable to send message\n");
             return -1;
         }
