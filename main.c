@@ -410,7 +410,7 @@ int main() {
         snprintf(client_message, sizeof(client_message), "%c %d %d", msgData.prefix, msgData.azimuth, msgData.elevation);
 
         // Send the message to server:
-        if(send(socket_desc, client_message, strlen(client_message), 0) < 0){
+        if(write(socket_desc, client_message, strlen(client_message)) < 0){
             printf("Unable to send message\n");
             return -1;
         }
@@ -427,7 +427,7 @@ int main() {
 
 double solveKeplersEquation(double meanAnomalyRadians, double eccentricity){
     double E_0;
-    // inital values from Matt Harris lecture notes page 5.12
+    // Initial values from Matt Harris lecture notes page 5.12
     if (meanAnomalyRadians < M_PI){
         E_0 = meanAnomalyRadians + eccentricity/2;
     }

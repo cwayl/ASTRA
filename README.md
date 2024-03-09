@@ -28,6 +28,6 @@ Active Sattelite Radio Tracking Antenna(ASTRA) is a software for automatic contr
 4. Run `gcc -o ASTRA_Program ASTRA/main.c -lm` to compile the code.
 
 ## Running the Code
-1. Turn on the rotator driver by running `./greenctld --az-device /dev/ttyUSB0 --el-device /dev/ttyUSB1` Remember that the USB adresses may be different in some cases. 
+1. Turn on the rotator driver by running `./gasctld/greenctld --az-device /dev/ttyUSB0 --el-device /dev/ttyUSB1` Remember that the USB adresses may be different in some cases. 
 2. Turn on ASTRA by running `./ASTRA_Program` in a seperate terminal. 
 
