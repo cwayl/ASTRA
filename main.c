@@ -14,7 +14,9 @@
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
+#include <string.h>
 #include "orbital_Numbers.h"
+#include <stdlib.h>
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define NUM_ROWS(a) ARRAYSIZE(a)
@@ -25,7 +27,6 @@
 #define NUM_COLS_Q 3 // Number of columns in Q
 #define NUM_ROWS_VECTOR 3 // Number of rows in a vector
 #define NUM_COLS_VECTOR 1 // Number of columns in a vector
-
 
 // Function prototypes
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
@@ -109,18 +110,17 @@ int main() {
     meanMotion = 15.19316519;
 */
 
-
     latitude = 41.737878;
     longitude = -111.830846;
     altitude = 1.382;
     epochYear = 2024;
-    epoch = 67.61470730;
-    inclination = 97.4731;
-    raan = 326.7464;
-    eccentricity = 0.0016921;
-    argumentOfPerigee = 129.5379;
-    TLE_meanAnomaly = 230.7355;
-    meanMotion = 15.21206633161949;
+    epoch = 68.31916512;
+    inclination = 120.5010;
+    raan = 148.2824;
+    eccentricity = 0.0191697;
+    argumentOfPerigee = 222.3182;
+    TLE_meanAnomaly = 136.2948;
+    meanMotion = 14.97213485550764;
 
     // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
@@ -267,7 +267,8 @@ int main() {
 
         // Convert UTC time into Julian time
         // Equation 5.48
-        double J_O = 367 * (ptr->tm_year + 1900) - floor((7 * ((ptr->tm_year + 1900)+floor(((ptr->tm_mon + 1) + 9)/12))) / 4) + floor((275 * (ptr->tm_mon + 1)) / 9) + ptr->tm_mday + 1721013.5;
+        double J_O = 367 * (ptr->tm_year + 1900) - floor((7 * ((ptr->tm_year + 1900)+floor(((ptr->tm_mon + 1) + 9)/12))) / 4)
+                + floor((275 * (ptr->tm_mon + 1)) / 9) + ptr->tm_mday + 1721013.5;
         // Equation 5.49
         double T_O = (J_O - 2451545) / 36525;
 
@@ -286,7 +287,7 @@ int main() {
         // Step 7: Calculate station position in geo equatorial frame
 
         // Convert sidereal time to radians
-        sidereal_time = deg2rad(sidereal_time) ;
+        sidereal_time = deg2rad(sidereal_time);
 
         // Calculate observer position
         double R[3][1];
@@ -353,10 +354,21 @@ int main() {
         }
 
         // Step 10: Check if Elevation is above horizon
-
+        char scriptMessage[40];
+        int atHome = 0;
         if (rho_R[2][0] < 0) {
             printf("Move to Home\n");
+            if(atHome == 0){
+                system("/home/astra/rotatorScript.sh 180 0");
+                atHome = 1;
+            }
         } else {
+            snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d",
+                (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
+            system(scriptMessage);
+            if(atHome == 1){
+                atHome = 0;
+            }
             printf("Move to Coordinates\n");
         }
 
@@ -372,7 +384,7 @@ int main() {
 
 double solveKeplersEquation(double meanAnomalyRadians, double eccentricity){
     double E_0;
-    // inital values from Matt Harris lecture notes page 5.12
+    // Initial values from Matt Harris lecture notes page 5.12
     if (meanAnomalyRadians < M_PI){
         E_0 = meanAnomalyRadians + eccentricity/2;
     }
