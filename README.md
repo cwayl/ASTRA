@@ -7,9 +7,10 @@ Active Sattelite Radio Tracking Antenna(ASTRA) is a software for automatic contr
 
 ## Installation Instructions
 
-0. Install [Raspberry Pi OS Legacy](https://www.raspberrypi.com/software/operating-systems/) (bullseye) 
+0. Install [Raspberry Pi OS Legacy](https://www.raspberrypi.com/software/operating-systems/) (bullseye). 
+Make sure to download the bullseye verison because python2 won't work correcty on the other versions.
 
-1. Remove python3 
+1. Remove python3 with the following commands.
    ```
    sudo apt-get remove python3
    ```
@@ -20,7 +21,7 @@ Active Sattelite Radio Tracking Antenna(ASTRA) is a software for automatic contr
    sudo apt-get remove autoclean
    ```
 
-2. Follow the installation instructions of the [gasctld driver](https://github.com/SmallSatGasTeam/greenctld)
+2. Follow the installation instructions of the [gasctld driver](https://github.com/SmallSatGasTeam/greenctld).
 
 3. Download ASTRA with the command `git clone -b Socket-Interface https://github.com/cwayl/ASTRA.git`
 
