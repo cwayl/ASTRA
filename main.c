@@ -17,6 +17,7 @@
 #include <string.h>
 #include "orbital_Numbers.h"
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define NUM_ROWS(a) ARRAYSIZE(a)
@@ -355,19 +356,19 @@ int main() {
 
         // Step 10: Check if Elevation is above horizon
         char scriptMessage[40];
-        int atHome = 0;
+        bool atHome = false;
         if (rho_R[2][0] < 0) {
             printf("Move to Home\n");
-            if(atHome == 0){
+            if(atHome == false){
                 system("/home/astra/rotatorScript.sh 180 0");
-                atHome = 1;
+                atHome = true;
             }
         } else {
             snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d",
                 (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
             system(scriptMessage);
-            if(atHome == 1){
-                atHome = 0;
+            if(atHome == true){
+                atHome = false;
             }
             printf("Move to Coordinates\n");
         }
