@@ -9,18 +9,14 @@
  *   by Howard d. Curtis
  *
  */
-int DEBUG = 1;
 
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
 #include <string.h>
 #include "orbital_Numbers.h"
 #include <stdlib.h>
-
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define NUM_ROWS(a) ARRAYSIZE(a)
@@ -31,7 +27,6 @@ int DEBUG = 1;
 #define NUM_COLS_Q 3 // Number of columns in Q
 #define NUM_ROWS_VECTOR 3 // Number of rows in a vector
 #define NUM_COLS_VECTOR 1 // Number of columns in a vector
-
 
 // Function prototypes
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
@@ -57,32 +52,6 @@ int main() {
      */
 
     // Step 1: Input TLE/Station Info
-   /*
-    int socket_desc;
-    struct sockaddr_in server_addr;
-    char server_message[2000];
-
-    // Create socket:
-    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(socket_desc < 0){
-        printf("Unable to create socket\n");
-        return -1;
-    }
-    printf("Socket created successfully\n");
-
-    // Set port and IP the same as server-side:
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(4533);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    // Send connection request to server:
-    if(connect(socket_desc, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0){
-        printf("Unable to connect\n");
-        return -1;
-    }
-    printf("Connected with server successfully\n");
-*/
 
     // Define variables for user input
     double latitude, longitude, altitude;
@@ -299,7 +268,8 @@ int main() {
 
         // Convert UTC time into Julian time
         // Equation 5.48
-        double J_O = 367 * (ptr->tm_year + 1900) - floor((7 * ((ptr->tm_year + 1900)+floor(((ptr->tm_mon + 1) + 9)/12))) / 4) + floor((275 * (ptr->tm_mon + 1)) / 9) + ptr->tm_mday + 1721013.5;
+        double J_O = 367 * (ptr->tm_year + 1900) - floor((7 * ((ptr->tm_year + 1900)+floor(((ptr->tm_mon + 1) + 9)/12))) / 4)
+                + floor((275 * (ptr->tm_mon + 1)) / 9) + ptr->tm_mday + 1721013.5;
         // Equation 5.49
         double T_O = (J_O - 2451545) / 36525;
 
@@ -318,7 +288,7 @@ int main() {
         // Step 7: Calculate station position in geo equatorial frame
 
         // Convert sidereal time to radians
-        sidereal_time = deg2rad(sidereal_time) ;
+        sidereal_time = deg2rad(sidereal_time);
 
         // Calculate observer position
         double R[3][1];
@@ -385,59 +355,30 @@ int main() {
         }
 
         // Step 10: Check if Elevation is above horizon
-        char scriptMessage[50];
+        char scriptMessage[40];
         int atHome = 0;
         if (rho_R[2][0] < 0) {
-            if (atHome = 0){
-                snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh 180 0");
+            printf("Move to Home\n");
+            if(atHome == 0){
+                system("/home/astra/rotatorScript.sh 180 0");
                 atHome = 1;
             }
-            printf("Move to Home\n");
         } else {
-            atHome = 0;
-            snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d ", (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
+            snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d",
+                (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
+            system(scriptMessage);
+            if(atHome == 1){
+                atHome = 0;
+            }
             printf("Move to Coordinates\n");
         }
 
         printf("Azimuth: %f\n", rad2deg(Azimuth));
         printf("Elevation: %f\n", rad2deg(Elevation));
 
-        system(scriptMessage);
-
-
-        int azimuthInt = floor(rad2deg(Azimuth));
-        int elevationInt = floor(rad2deg(Elevation));
-/*
-        struct MessageData {
-            char prefix;
-            int azimuth;
-            int elevation;
-        };
-
-        struct MessageData msgData;
-        msgData.prefix = 'P';
-        msgData.azimuth = azimuthInt;
-        msgData.elevation = elevationInt;
-
-        char client_message[50];
-        snprintf(client_message, sizeof(client_message), "%c %d %d", msgData.prefix, msgData.azimuth, msgData.elevation);
-        if (DEBUG = 1){
-            printf("%s", client_message);
-        }
-
-        // Send the message to server:
-        if(read(socket_desc, client_message, strlen(client_message)) < 0){
-            printf("Unable to send message\n");
-            return -1;
-        }*/
-
-
         sleep(1);
 
-        //Running the shell script?
     }
-
-    // close(socket_desc);
 
     return 0;
 }
