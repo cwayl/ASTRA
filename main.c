@@ -60,10 +60,22 @@ int main() {
     int epochYear;
     double epoch, inclination, raan, eccentricity, argumentOfPerigee, TLE_meanAnomaly, meanMotion;
 
+    // Get lat long and alt from Station file
+    FILE *Station;
+    Station = fopen("Station.txt", "r");
+    char latitudeString[20];
+    char longitudeString[20];
+    char altitudeString[20];
+    fgets(latitudeString,sizeof latitudeString, Station);
+    fgets(longitudeString,sizeof longitudeString, Station);
+    fgets(altitudeString,sizeof altitudeString, Station);
+    fclose(Station);
+    latitude = atof(latitudeString);
+    longitude = atof(longitudeString);
+    altitude = atof(altitudeString);
+
     // Convert latitude to radians for future calculations
-    latitude = deg2rad(41.737878);
-    longitude = -111.830846;
-    altitude = 1.382;
+    latitude = deg2rad(latitude);
 
     // Get the NORAD ID of the satellite
     char NORAD[7];
