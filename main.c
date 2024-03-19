@@ -79,15 +79,29 @@ int main() {
 
     // Get the NORAD ID of the satellite
     char NORAD[7];
+    char cookie_Command[150];
     char TLE_Command[150];
     printf("NORAD ID: ");
     scanf("%s", &NORAD);
 
+    // Login in and get satellite TLE
+    FILE *Credentials;
+    Credentials = fopen("Credentials.txt", "r");
+    char username[72];
+    char password[72];
+    fgets(username,sizeof username, Credentials);
+    fgets(password,sizeof password, Credentials);
+    fclose(Credentials);
+    char *e;
+    int index;
+    e = strchr(username, '\n');
+    index = (int)(e - username);
+    username[index] = '\0';
+    snprintf(cookie_Command, sizeof cookie_Command, "curl -c cookies.txt -b cookies.txt https://www.space-track.org/ajaxauth/login -d 'identity=%s&password=%s'", username, password);
+    system(cookie_Command);
     // Use NORAD ID to make API command
     // Puts TLE in TLE.txt
     snprintf(TLE_Command, sizeof(TLE_Command), "curl --limit-rate 100K --cookie cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > TLE.txt", NORAD);
-    // Login in and get satellite TLE
-    system("curl -c cookies.txt -b cookies.txt https://www.space-track.org/ajaxauth/login -d 'identity=c.j.runner16@gmail.com&password=jamvem-tecfoZ-8higsa'");
     system(TLE_Command);
 
     // Open TLE.txt and read lines to strings
@@ -411,3 +425,4 @@ void string_select(char *s, int index_start, int index_end , char *output, int s
         output[i - index_start] = s[i];
     }
 }
+
