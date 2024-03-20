@@ -84,7 +84,7 @@ int main() {
     printf("NORAD ID: ");
     scanf("%s", &NORAD);
 
-    // Login in and get satellite TLE
+    // Get username and password form Credentials file
     FILE *Credentials;
     Credentials = fopen("Credentials.txt", "r");
     char username[72];
@@ -92,11 +92,15 @@ int main() {
     fgets(username,sizeof username, Credentials);
     fgets(password,sizeof password, Credentials);
     fclose(Credentials);
+
+    // Remove extra character form username variable
     char *e;
     int index;
     e = strchr(username, '\n');
     index = (int)(e - username);
     username[index] = '\0';
+
+    // Get cookie using username and login
     snprintf(cookie_Command, sizeof cookie_Command, "curl -c cookies.txt -b cookies.txt https://www.space-track.org/ajaxauth/login -d 'identity=%s&password=%s'", username, password);
     system(cookie_Command);
     // Use NORAD ID to make API command
