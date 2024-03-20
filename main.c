@@ -126,12 +126,6 @@ int main() {
     // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
 
-    double w_dot; // Average rate of change in argument of perigee
-    double omega_dot; // Average rate of change in RAAN
-
-    w_dot = -((3/2) * ((J_2 * sqrt(EARTH_MU) * EARTH_RADIUS_EQUATORIAL^2) / (pow(a, 7/2) * pow((1 - pow(eccentricity, 2)), 2))) * (cos(inclination));
-    omega_dot = -((3/2) * ((J_2 * sqrt(EARTH_MU) * EARTH_RADIUS_EQUATORIAL^2) / (pow(a, 7/2) * pow((1 - pow(eccentricity, 2)), 2))) *
-
     // Step 2: Calculate h (specific angular momentum)
 
     double a; // Semi-major axis
@@ -148,13 +142,21 @@ int main() {
     // Substituting Equation 2.73 we can set r = r_p and theta = 0
     h = sqrt(EARTH_MU * a * (1 - pow(eccentricity,2)));
 
-    // Step 5 is out of order because the first part is not dependent on time (and therefore does not need to be in the loop) but the second part is.
-    // Step 5a: Calculate the Rotation Matrix
+    // Perturbations
+    double w_dot; // Average rate of change in argument of perigee
+    double omega_dot; // Average rate of change in RAAN
 
     // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
     double raanRad = deg2rad(raan);
     double inclinationRad = deg2rad(inclination);
     double argumentOfPerigeeRad = deg2rad(argumentOfPerigee);
+
+    omega_dot = -((3.0/2.0) * ((J_2 * sqrt(EARTH_MU) * pow(EARTH_RADIUS_EQUATORIAL, 2)) / (pow(a, 7.0/2) * pow((1 - pow(eccentricity, 2)), 2)))) * (cos(inclinationRad));
+    w_dot = -(3.0/2.0) * ((J_2 * sqrt(EARTH_MU) * pow(EARTH_RADIUS_EQUATORIAL, 2)) /( (pow(a, 7.0/2) * pow((1 - pow(eccentricity, 2)), 2)))) * ((5.0/2.0) *
+                                                                                                                                       pow((sin(inclinationRad - 2)), 2));
+
+    // Step 5 is out of order because the first part is not dependent on time (and therefore does not need to be in the loop) but the second part is.
+    // Step 5a: Calculate the Rotation Matrix
 
     // Equation 4.49
     double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
