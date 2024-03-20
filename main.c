@@ -126,6 +126,12 @@ int main() {
     // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
 
+    double w_dot; // Average rate of change in argument of perigee
+    double omega_dot; // Average rate of change in RAAN
+
+    w_dot = -((3/2) * ((J_2 * sqrt(EARTH_MU) * EARTH_RADIUS_EQUATORIAL^2) / (pow(a, 7/2) * pow((1 - pow(eccentricity, 2)), 2))) * (cos(inclination));
+    omega_dot = -((3/2) * ((J_2 * sqrt(EARTH_MU) * EARTH_RADIUS_EQUATORIAL^2) / (pow(a, 7/2) * pow((1 - pow(eccentricity, 2)), 2))) *
+
     // Step 2: Calculate h (specific angular momentum)
 
     double a; // Semi-major axis
