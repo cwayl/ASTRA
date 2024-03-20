@@ -115,13 +115,13 @@ int main() {
     longitude = -111.830846;
     altitude = 1.382;
     epochYear = 2024;
-    epoch = 68.31916512;
-    inclination = 120.5010;
-    raan = 148.2824;
-    eccentricity = 0.0191697;
-    argumentOfPerigee = 222.3182;
-    TLE_meanAnomaly = 136.2948;
-    meanMotion = 14.97213485550764;
+    epoch = 78.40150106;
+    inclination = 120.4990;
+    raan = 185.9950;
+    eccentricity = 0.0189610;
+    argumentOfPerigee = 233.5402;
+    TLE_meanAnomaly = 124.8049;
+    meanMotion = 14.97522107552276;
 
     // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
@@ -155,75 +155,6 @@ int main() {
     w_dot = -(3.0/2.0) * ((J_2 * sqrt(EARTH_MU) * pow(EARTH_RADIUS_EQUATORIAL, 2)) /( (pow(a, 7.0/2) * pow((1 - pow(eccentricity, 2)), 2)))) * ((5.0/2.0) *
                                                                                                                                        pow((sin(inclinationRad)), 2) -2);
 
-    // Step 5 is out of order because the first part is not dependent on time (and therefore does not need to be in the loop) but the second part is.
-    // Step 5a: Calculate the Rotation Matrix
-
-    // Equation 4.49
-    double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
-            {cos(argumentOfPerigeeRad), sin(argumentOfPerigeeRad), 0},
-            {-sin(argumentOfPerigeeRad), cos(argumentOfPerigeeRad), 0},
-            {0, 0, 1},
-    };
-    // Equation 4.32
-    double R_2[NUM_ROWS_Q][NUM_COLS_Q] = {
-            {1, 0 ,0},
-            {0, cos(inclinationRad), sin(inclinationRad)},
-            {0, -sin(inclinationRad), cos(inclinationRad)}
-
-    };
-    // Equation 4.34
-    double R_3[NUM_ROWS_Q][NUM_COLS_Q] = {
-            {cos(raanRad), sin(raanRad), 0},
-            {-sin(raanRad), cos(raanRad), 0},
-            {0, 0, 1},
-    };
-
-    double R_1_2resultMatrix[NUM_ROWS_Q][NUM_COLS_Q]={
-            {0, 0, 0},
-            {0, 0, 0},
-            {0, 0, 0}
-    };
-
-    double Q_Matrix[NUM_ROWS_Q][NUM_COLS_Q]={
-            {0, 0, 0},
-            {0, 0, 0},
-            {0, 0, 0}
-    };
-
-    // Equation 4.49 for next four loops
-    // Perform matrix multiplication R_1 * R_2
-    for (int i = 0; i < NUM_ROWS_Q; i++) {
-        for (int j = 0; j < NUM_COLS_Q; j++) {
-            R_1_2resultMatrix[i][j] = 0; // Initialize the element to 0
-            for (int k = 0; k < NUM_COLS_Q; k++) {
-                R_1_2resultMatrix[i][j] += R_1[i][k] * R_2[k][j];
-            }
-        }
-    }
-
-    // Perform matrix multiplication (R_1 * R_2) * R_3
-    for (int i = 0; i < NUM_ROWS_Q; i++) {
-        for (int j = 0; j < NUM_COLS_Q; j++) {
-            Q_Matrix[i][j] = 0; // Initialize the element to 0
-            for (int k = 0; k < NUM_COLS_Q; k++) {
-                Q_Matrix[i][j] += R_1_2resultMatrix[i][k] * R_3[k][j];
-            }
-        }
-    }
-
-    double Q_Matrix_New[NUM_ROWS_Q][NUM_COLS_Q]= {
-            {0, 0, 0},
-            {0, 0, 0},
-            {0, 0, 0}
-    };
-
-    // Transpose the Q_Matrix
-    for (int i = 0; i < NUM_ROWS_Q; i++) {
-        for (int j = 0; j < NUM_COLS_Q; j++) {
-            Q_Matrix_New[j][i] = Q_Matrix[i][j];
-        }
-    }
-
     while(1) {
 
         // The current time is needed for steps three and six, so it is calculated here
@@ -240,7 +171,7 @@ int main() {
         // Step 3: Calculate True Anomaly
 
         double dayOfYear = ptr->tm_yday + 1 + UT/24;
-        // Time since the TLE was observed
+        // Time since the TLE was observed in days
         // Assumes the TLE and current year are the same
         double delta_t = dayOfYear - epoch;
         double delta_MeanAnamoly = delta_t * meanMotion * 360;
@@ -262,6 +193,79 @@ int main() {
         r_perifocal[2][0] = 0; // z-component
 
         //Step 5: Rotate position vector to geo equatorial frame
+
+        double currentArgumentOfPerigeeRad, currentRaanRad;
+        currentArgumentOfPerigeeRad = argumentOfPerigee + w_dot * (delta_t*24.0*3600.0);
+        currentRaanRad = raanRad + omega_dot * (delta_t*24.0*3600.0);
+
+        // Step 5a: Calculate the Rotation Matrix
+
+        // Equation 4.49
+        double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
+                {cos(currentArgumentOfPerigeeRad), sin(currentArgumentOfPerigeeRad), 0},
+                {-sin(currentArgumentOfPerigeeRad), cos(currentArgumentOfPerigeeRad), 0},
+                {0, 0, 1},
+        };
+        // Equation 4.32
+        double R_2[NUM_ROWS_Q][NUM_COLS_Q] = {
+                {1, 0 ,0},
+                {0, cos(inclinationRad), sin(inclinationRad)},
+                {0, -sin(inclinationRad), cos(inclinationRad)}
+
+        };
+        // Equation 4.34
+        double R_3[NUM_ROWS_Q][NUM_COLS_Q] = {
+                {cos(currentRaanRad), sin(currentRaanRad), 0},
+                {-sin(currentRaanRad), cos(currentRaanRad), 0},
+                {0, 0, 1},
+        };
+
+        double R_1_2resultMatrix[NUM_ROWS_Q][NUM_COLS_Q]={
+                {0, 0, 0},
+                {0, 0, 0},
+                {0, 0, 0}
+        };
+
+        double Q_Matrix[NUM_ROWS_Q][NUM_COLS_Q]={
+                {0, 0, 0},
+                {0, 0, 0},
+                {0, 0, 0}
+        };
+
+        // Equation 4.49 for next four loops
+        // Perform matrix multiplication R_1 * R_2
+        for (int i = 0; i < NUM_ROWS_Q; i++) {
+            for (int j = 0; j < NUM_COLS_Q; j++) {
+                R_1_2resultMatrix[i][j] = 0; // Initialize the element to 0
+                for (int k = 0; k < NUM_COLS_Q; k++) {
+                    R_1_2resultMatrix[i][j] += R_1[i][k] * R_2[k][j];
+                }
+            }
+        }
+
+        // Perform matrix multiplication (R_1 * R_2) * R_3
+        for (int i = 0; i < NUM_ROWS_Q; i++) {
+            for (int j = 0; j < NUM_COLS_Q; j++) {
+                Q_Matrix[i][j] = 0; // Initialize the element to 0
+                for (int k = 0; k < NUM_COLS_Q; k++) {
+                    Q_Matrix[i][j] += R_1_2resultMatrix[i][k] * R_3[k][j];
+                }
+            }
+        }
+
+        double Q_Matrix_New[NUM_ROWS_Q][NUM_COLS_Q]= {
+                {0, 0, 0},
+                {0, 0, 0},
+                {0, 0, 0}
+        };
+
+        // Transpose the Q_Matrix
+        for (int i = 0; i < NUM_ROWS_Q; i++) {
+            for (int j = 0; j < NUM_COLS_Q; j++) {
+                Q_Matrix_New[j][i] = Q_Matrix[i][j];
+            }
+        }
+
         //      5b: Multiply the position vector and Rotation Matrix
 
         // Calculate the geocentric equatorial frame position vector
