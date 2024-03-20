@@ -184,7 +184,7 @@ int main() {
 
     omega_dot = -((3.0/2.0) * ((J_2 * sqrt(EARTH_MU) * pow(EARTH_RADIUS_EQUATORIAL, 2)) / (pow(a, 7.0/2) * pow((1 - pow(eccentricity, 2)), 2)))) * (cos(inclinationRad));
     w_dot = -(3.0/2.0) * ((J_2 * sqrt(EARTH_MU) * pow(EARTH_RADIUS_EQUATORIAL, 2)) /( (pow(a, 7.0/2) * pow((1 - pow(eccentricity, 2)), 2)))) * ((5.0/2.0) *
-                                                                                                                                       pow((sin(inclinationRad - 2)), 2));
+                                                                                                                                       pow((sin(inclinationRad)), 2) -2);
 
     // Step 5 is out of order because the first part is not dependent on time (and therefore does not need to be in the loop) but the second part is.
     // Step 5a: Calculate the Rotation Matrix
