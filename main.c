@@ -17,7 +17,6 @@
 #include <string.h>
 #include "orbital_Numbers.h"
 #include <stdlib.h>
-#include <stdbool.h>
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define NUM_ROWS(a) ARRAYSIZE(a)
@@ -240,6 +239,10 @@ int main() {
         }
     }
 
+    int prevElevation, prevAzimuth;
+    prevAzimuth = -1;
+    prevElevation = -1;
+
     while(1) {
 
         // The current time is needed for steps three and six, so it is calculated here
@@ -381,22 +384,24 @@ int main() {
         // Step 10: Check if Elevation is above horizon
         char scriptMessage[40];
         int azimuthInt, elevationInt;
-        bool atHome = false;
+//      if the satellite is below the horizon move to home other wise move to vector position
+//      the current position of the rotator is checked to make sure we dont repeat commands
         if (rho_R[2][0] < 0) {
             printf("Move to Home\n");
-            if(atHome == false){
+            if((prevAzimuth != 180) || (prevElevation != 0)){
                 system("/home/astra/rotatorScript.sh 180 0");
-                atHome = true;
+                prevAzimuth = 180;
+                prevElevation = 0;
             }
         } else {
             azimuthInt = (int) floor(rad2deg(Azimuth));
             elevationInt = (int) floor(rad2deg(Elevation));
-
-            snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d",
-               azimuthInt, elevationInt);
-            system(scriptMessage);
-            if(atHome == true){
-                atHome = false;
+            if ((prevAzimuth != azimuthInt) || (prevElevation != elevationInt)) {
+                snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d",
+                         azimuthInt, elevationInt);
+                system(scriptMessage);
+                prevElevation = elevationInt;
+                prevAzimuth = azimuthInt;
             }
             printf("Move to Coordinates\n");
         }
