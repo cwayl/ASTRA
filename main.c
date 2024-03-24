@@ -17,7 +17,6 @@
 #include <string.h>
 #include "orbital_Numbers.h"
 #include <stdlib.h>
-#include <stdbool.h>
 
 #define ARRAYSIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define NUM_ROWS(a) ARRAYSIZE(a)
@@ -32,6 +31,7 @@
 // Function prototypes
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
 double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity);
+void string_select(char *s, int index_start, int index_end , char *output, int size);
 
 int main() {
 
@@ -59,72 +59,95 @@ int main() {
     int epochYear;
     double epoch, inclination, raan, eccentricity, argumentOfPerigee, TLE_meanAnomaly, meanMotion;
 
-    // This step is currently commented out to make troubleshooting and debugging easier
-
-    /*
-    printf("Enter Latitude of Ground Station (degrees): ");
-    scanf("%lf", &latitude);
-
-    printf("Enter Longitude of Ground Station (degrees): ");
-    scanf("%lf", &longitude);
-
-    printf("Enter Altitude of Ground Station (km): ");
-    scanf("%lf", &altitude);
-
-    printf("Enter Epoch Year from TLE (YYYY): ");
-    scanf("%d", &epochYear);
-
-    printf("Enter Epoch from TLE (day of the year): ");
-    scanf("%lf", &epoch);
-
-    printf("Enter Inclination from TLE (degrees): ");
-    scanf("%lf", &inclination);
-
-    printf("Enter RAAN (Right Ascension of the Ascending Node) from TLE (degrees): ");
-    scanf("%lf", &raan);
-
-    printf("Enter Eccentricity from TLE: ");
-    scanf("%lf", &eccentricity);
-
-    printf("Enter Argument of Perigee from TLE (degrees): ");
-    scanf("%lf", &argumentOfPerigee);
-
-    printf("Enter Mean Anomaly from TLE (degrees): ");
-    scanf("%lf", &meanAnomaly);
-
-    printf("Enter Mean Motion from TLE (revolutions per day): ");
-    scanf("%lf", &meanMotion);
-
-     */
-
-/*
-    latitude = 41.737878 ;
-    longitude = -111.830846;
-    altitude = 1.382;
-    epochYear = 2024;
-    epoch = 59.80121106;
-    inclination = 97.4396;
-    raan = 127.9486;
-    eccentricity = 0.0012457;
-    argumentOfPerigee = 306.0086;
-    meanAnomaly = 53.9993;
-    meanMotion = 15.19316519;
-*/
-
-    latitude = 41.737878;
-    longitude = -111.830846;
-    altitude = 1.382;
-    epochYear = 2024;
-    epoch = 68.31916512;
-    inclination = 120.5010;
-    raan = 148.2824;
-    eccentricity = 0.0191697;
-    argumentOfPerigee = 222.3182;
-    TLE_meanAnomaly = 136.2948;
-    meanMotion = 14.97213485550764;
+    // Get lat long and alt from Station file
+    FILE *Station;
+    Station = fopen("Station.txt", "r");
+    char latitudeString[20];
+    char longitudeString[20];
+    char altitudeString[20];
+    fgets(latitudeString,sizeof latitudeString, Station);
+    fgets(longitudeString,sizeof longitudeString, Station);
+    fgets(altitudeString,sizeof altitudeString, Station);
+    fclose(Station);
+    latitude = atof(latitudeString);
+    longitude = atof(longitudeString);
+    altitude = atof(altitudeString);
 
     // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
+
+    char manualTLE;
+
+    printf("Is this a manual TLE? (y/n): ");
+    scanf("%c", &manualTLE);
+
+    if (manualTLE == 'n') {
+
+        // Get the NORAD ID of the satellite
+        char NORAD[7];
+        char cookie_Command[150];
+        char TLE_Command[150];
+        printf("NORAD ID: ");
+        scanf("%s", NORAD);
+
+        // Get username and password form Credentials file
+        FILE *Credentials;
+        Credentials = fopen("Credentials.txt", "r");
+        char username[72];
+        char password[72];
+        fgets(username, sizeof username, Credentials);
+        fgets(password, sizeof password, Credentials);
+        fclose(Credentials);
+
+        // Remove extra character form username variable
+        char *e;
+        int index;
+        e = strchr(username, '\n');
+        index = (int) (e - username);
+        username[index] = '\0';
+
+        // Get cookie using username and login
+        snprintf(cookie_Command, sizeof cookie_Command,
+                 "curl -c cookies.txt -b cookies.txt https://www.space-track.org/ajaxauth/login -d 'identity=%s&password=%s'",
+                 username, password);
+        system(cookie_Command);
+        // Use NORAD ID to make API command
+        // Puts TLE in TLE.txt
+        snprintf(TLE_Command, sizeof(TLE_Command),
+                 "curl --limit-rate 100K --cookie cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > TLE.txt",
+                 NORAD);
+        system(TLE_Command);
+    } else if (manualTLE != 'y'){
+        printf("Incompatabile letter.\n");
+    }
+
+    // Open TLE.txt and read lines to strings
+    FILE *TLE;
+    TLE = fopen("TLE.txt", "r");
+    char TLE_Line1[72];
+    char TLE_Line2[72];
+    fgets(TLE_Line1,sizeof TLE_Line1, TLE);
+    fgets(TLE_Line2,sizeof TLE_Line2, TLE);
+    fclose(TLE);
+
+    // Copy numbers from strings to usable variables
+    char test[13];
+    string_select(TLE_Line1, 18, 19, test, sizeof(test));
+    epochYear = atoi(test) + 2000;
+    string_select(TLE_Line1, 20, 31, test, sizeof(test));
+    epoch = atof(test);
+    string_select(TLE_Line2, 8, 15, test, sizeof(test));
+    inclination = atof(test);
+    string_select(TLE_Line2, 17, 24, test, sizeof(test));
+    raan = atof(test);
+    string_select(TLE_Line2, 26, 32, test, sizeof(test));
+    eccentricity = atof(test) * 0.0000001;
+    string_select(TLE_Line2, 34, 41, test, sizeof(test));
+    argumentOfPerigee = atof(test);
+    string_select(TLE_Line2, 43, 50, test, sizeof(test));
+    TLE_meanAnomaly = atof(test);
+    string_select(TLE_Line2, 52, 62, test, sizeof(test));
+    meanMotion = atof(test);
 
     // Step 2: Calculate h (specific angular momentum)
 
@@ -215,6 +238,10 @@ int main() {
             Q_Matrix_New[j][i] = Q_Matrix[i][j];
         }
     }
+
+    int prevElevation, prevAzimuth;
+    prevAzimuth = -1;
+    prevElevation = -1;
 
     while(1) {
 
@@ -356,19 +383,25 @@ int main() {
 
         // Step 10: Check if Elevation is above horizon
         char scriptMessage[40];
-        bool atHome = false;
+        int azimuthInt, elevationInt;
+//      if the satellite is below the horizon move to home other wise move to vector position
+//      the current position of the rotator is checked to make sure we dont repeat commands
         if (rho_R[2][0] < 0) {
             printf("Move to Home\n");
-            if(atHome == false){
+            if((prevAzimuth != 180) || (prevElevation != 0)){
                 system("/home/astra/rotatorScript.sh 180 0");
-                atHome = true;
+                prevAzimuth = 180;
+                prevElevation = 0;
             }
         } else {
-            snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d",
-                (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
-            system(scriptMessage);
-            if(atHome == true){
-                atHome = false;
+            azimuthInt = (int) floor(rad2deg(Azimuth));
+            elevationInt = (int) floor(rad2deg(Elevation));
+            if ((prevAzimuth != azimuthInt) || (prevElevation != elevationInt)) {
+                snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d",
+                         azimuthInt, elevationInt);
+                system(scriptMessage);
+                prevElevation = elevationInt;
+                prevAzimuth = azimuthInt;
             }
             printf("Move to Coordinates\n");
         }
@@ -407,3 +440,16 @@ double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity){
     // Equation 3.13a solved for true anomaly
     return fmod(2* atan(sqrt( (1+eccentricity)/(1-eccentricity)) * tan(eccentricAnomaly/2)) + 2*M_PI,2*M_PI);
 }
+
+// sets the output string to zero then copies the specified part of the string to output
+void string_select(char *s, int index_start, int index_end , char *output, int size)
+{
+    for (int i = 0; i < size; i++) {
+        output[i] = 0;
+    }
+
+    for (int i = index_start; i <= index_end; i++){
+        output[i - index_start] = s[i];
+    }
+}
+

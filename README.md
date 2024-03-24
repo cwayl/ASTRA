@@ -2,6 +2,7 @@
 Active Sattelite Radio Tracking Antenna(ASTRA) is a software for automatic control of a rotator. 
 ## Table of Contents
 * [Installation Instructions](#installation-instructions)
+* [Setup](#Setup)
 * [Running the Code](#running-the-code)
 
 
@@ -27,6 +28,10 @@ Make sure to download the bullseye verison because python2 won't work correcty o
 
 
 4. Run `gcc -o ASTRA_Program ASTRA/main.c -lm` to compile the code.
+
+## Setup 
+Modify the `Station.txt` file by entering the lattitude, longitude, and altitude of the Ground Station.
+By default the file is setup for the USU GAS Ground Station in Logan, UT.
 
 ## Running the Code
 1. Turn on the rotator driver by running `./gasctld/greenctld --az-device /dev/ttyUSB0 --el-device /dev/ttyUSB1` Remember that the USB adresses may be different in some cases. 
