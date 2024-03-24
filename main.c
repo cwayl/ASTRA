@@ -77,36 +77,50 @@ int main() {
     // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
 
-    // Get the NORAD ID of the satellite
-    char NORAD[7];
-    char cookie_Command[150];
-    char TLE_Command[150];
-    printf("NORAD ID: ");
-    scanf("%s", &NORAD);
+    char manualTLE;
 
-    // Get username and password form Credentials file
-    FILE *Credentials;
-    Credentials = fopen("Credentials.txt", "r");
-    char username[72];
-    char password[72];
-    fgets(username,sizeof username, Credentials);
-    fgets(password,sizeof password, Credentials);
-    fclose(Credentials);
+    printf("Is this a manual TLE? (y/n): ");
+    scanf("%c", &manualTLE);
 
-    // Remove extra character form username variable
-    char *e;
-    int index;
-    e = strchr(username, '\n');
-    index = (int)(e - username);
-    username[index] = '\0';
+    if (manualTLE == 'n') {
 
-    // Get cookie using username and login
-    snprintf(cookie_Command, sizeof cookie_Command, "curl -c cookies.txt -b cookies.txt https://www.space-track.org/ajaxauth/login -d 'identity=%s&password=%s'", username, password);
-    system(cookie_Command);
-    // Use NORAD ID to make API command
-    // Puts TLE in TLE.txt
-    snprintf(TLE_Command, sizeof(TLE_Command), "curl --limit-rate 100K --cookie cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > TLE.txt", NORAD);
-    system(TLE_Command);
+        // Get the NORAD ID of the satellite
+        char NORAD[7];
+        char cookie_Command[150];
+        char TLE_Command[150];
+        printf("NORAD ID: ");
+        scanf("%s", NORAD);
+
+        // Get username and password form Credentials file
+        FILE *Credentials;
+        Credentials = fopen("Credentials.txt", "r");
+        char username[72];
+        char password[72];
+        fgets(username, sizeof username, Credentials);
+        fgets(password, sizeof password, Credentials);
+        fclose(Credentials);
+
+        // Remove extra character form username variable
+        char *e;
+        int index;
+        e = strchr(username, '\n');
+        index = (int) (e - username);
+        username[index] = '\0';
+
+        // Get cookie using username and login
+        snprintf(cookie_Command, sizeof cookie_Command,
+                 "curl -c cookies.txt -b cookies.txt https://www.space-track.org/ajaxauth/login -d 'identity=%s&password=%s'",
+                 username, password);
+        system(cookie_Command);
+        // Use NORAD ID to make API command
+        // Puts TLE in TLE.txt
+        snprintf(TLE_Command, sizeof(TLE_Command),
+                 "curl --limit-rate 100K --cookie cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > TLE.txt",
+                 NORAD);
+        system(TLE_Command);
+    } else if (manualTLE != 'y'){
+        printf("Incompatabile letter.\n");
+    }
 
     // Open TLE.txt and read lines to strings
     FILE *TLE;
@@ -366,6 +380,7 @@ int main() {
 
         // Step 10: Check if Elevation is above horizon
         char scriptMessage[40];
+        int azimuthInt, elevationInt;
         bool atHome = false;
         if (rho_R[2][0] < 0) {
             printf("Move to Home\n");
@@ -374,8 +389,11 @@ int main() {
                 atHome = true;
             }
         } else {
+            azimuthInt = (int) floor(rad2deg(Azimuth));
+            elevationInt = (int) floor(rad2deg(Elevation));
+
             snprintf(scriptMessage, sizeof(scriptMessage), "/home/astra/rotatorScript.sh %d %d",
-                (int) floor(rad2deg(Azimuth)), (int) floor(rad2deg(Elevation)));
+               azimuthInt, elevationInt);
             system(scriptMessage);
             if(atHome == true){
                 atHome = false;
