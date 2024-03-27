@@ -58,7 +58,36 @@ int main() {
     double latitude, longitude, altitude;
     int epochYear;
     double epoch, inclination, raan, eccentricity, argumentOfPerigee, TLE_meanAnomaly, meanMotion;
+    char buffer[20];
+    FILE *BUFFER;
+    buffer[0] = 'a';
 
+    while (buffer[0] != '1') {
+        system("bash /Users/cooperwayland/Desktop/Start-Menu.sh");
+        BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
+        fgets(buffer, sizeof buffer, BUFFER);
+        fclose(BUFFER);
+        if (buffer[0] == '2') {
+            while (buffer[0] != '4') {
+                system("bash /Users/cooperwayland/Desktop/Setup-menu.sh");
+                BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
+                fgets(buffer, sizeof buffer, BUFFER);
+                fclose(BUFFER);
+                if (buffer[0] == '1') {
+                    system("bash /Users/cooperwayland/Desktop/Lat.sh");
+                    system("bash /Users/cooperwayland/Desktop/Long.sh");
+
+                } else if (buffer[0] == '2') {
+                    system("bash /Users/cooperwayland/Desktop/Username.sh");
+                    system("bash /Users/cooperwayland/Desktop/Password.sh");
+                }
+            }
+        }
+    }
+    system("bash /Users/cooperwayland/Desktop/Manual-Select.sh");
+    BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
+    fgets(buffer, sizeof buffer, BUFFER);
+    fclose(BUFFER);
     // Get lat long and alt from Station file
     FILE *Station;
     Station = fopen("Station.txt", "r");
@@ -76,12 +105,9 @@ int main() {
     // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
 
-    char manualTLE;
+    if (buffer[0] == '1') {
 
-    printf("Is this a manual TLE? (y/n): ");
-    scanf("%c", &manualTLE);
-
-    if (manualTLE == 'n') {
+        system("bash /Users/cooperwayland/Desktop/NORAD.sh");
 
         // Get the NORAD ID of the satellite
         char NORAD[7];
@@ -117,8 +143,9 @@ int main() {
                  "curl --limit-rate 100K --cookie cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > TLE.txt",
                  NORAD);
         system(TLE_Command);
-    } else if (manualTLE != 'y'){
-        printf("Incompatabile letter.\n");
+    } else if (buffer[0] == '2'){
+        system("bash /Users/cooperwayland/Desktop/TLE1.sh");
+        system("bash /Users/cooperwayland/Desktop/TLE2.sh");
     }
 
     // Open TLE.txt and read lines to strings
@@ -387,7 +414,6 @@ int main() {
 //      if the satellite is below the horizon move to home other wise move to vector position
 //      the current position of the rotator is checked to make sure we dont repeat commands
         if (rho_R[2][0] < 0) {
-            printf("Move to Home\n");
             if((prevAzimuth != 180) || (prevElevation != 0)){
                 system("/home/astra/rotatorScript.sh 180 0");
                 prevAzimuth = 180;
@@ -403,11 +429,12 @@ int main() {
                 prevElevation = elevationInt;
                 prevAzimuth = azimuthInt;
             }
-            printf("Move to Coordinates\n");
         }
 
-        printf("Azimuth: %f\n", rad2deg(Azimuth));
-        printf("Elevation: %f\n", rad2deg(Elevation));
+        char outputCommand[100];
+        snprintf(outputCommand, sizeof outputCommand,"bash /Users/cooperwayland/Desktop/Monitor.sh %f", Azimuth);
+
+        system(outputCommand);
 
         sleep(1);
 
