@@ -32,6 +32,8 @@
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
 double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity);
 void string_select(char *s, int index_start, int index_end , char *output, int size);
+void moveBuffer(char *buffer);
+void getCredentials(char *username, char *password);
 
 int main() {
 
@@ -58,38 +60,50 @@ int main() {
     double latitude, longitude, altitude;
     int epochYear;
     double epoch, inclination, raan, eccentricity, argumentOfPerigee, TLE_meanAnomaly, meanMotion;
-    char buffer[20];
+    char buffer[50];
     FILE *BUFFER;
+    FILE *Credentials;
+    FILE *Station;
     buffer[0] = 'a';
 
     while (buffer[0] != '1') {
         system("bash /Users/cooperwayland/Desktop/Start-Menu.sh");
-        BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
-        fgets(buffer, sizeof buffer, BUFFER);
-        fclose(BUFFER);
+        moveBuffer(buffer);
         if (buffer[0] == '2') {
+            // Setup Menu
             while (buffer[0] != '4') {
                 system("bash /Users/cooperwayland/Desktop/Setup-menu.sh");
-                BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
-                fgets(buffer, sizeof buffer, BUFFER);
-                fclose(BUFFER);
+                moveBuffer(buffer);
                 if (buffer[0] == '1') {
+                    // Station Coordinates
                     system("bash /Users/cooperwayland/Desktop/Lat.sh");
                     system("bash /Users/cooperwayland/Desktop/Long.sh");
                     system("bash /Users/cooperwayland/Desktop/Altitude.sh");
                 } else if (buffer[0] == '2') {
+                    // Space-Track.com Credentials
                     system("bash /Users/cooperwayland/Desktop/Username.sh");
+                    moveBuffer(buffer);
+
+                    Credentials = fopen("Credentials.txt", "w");
+                    fprintf(Credentials, "%s", buffer);
+                    fprintf(Credentials, "\n");
+                    fclose(Credentials);
+
                     system("bash /Users/cooperwayland/Desktop/Password.sh");
+                    moveBuffer(buffer);
+
+                    Credentials = fopen("Credentials.txt", "ab");
+                    fprintf(Credentials, "%s", buffer);
+                    fclose(Credentials);
+
                 }
             }
         }
     }
+    // Start ASTRA
     system("bash /Users/cooperwayland/Desktop/Manual-Select.sh");
-    BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
-    fgets(buffer, sizeof buffer, BUFFER);
-    fclose(BUFFER);
+    moveBuffer(buffer);
     // Get lat long and alt from Station file
-    FILE *Station;
     Station = fopen("Station.txt", "r");
     char latitudeString[20];
     char longitudeString[20];
@@ -106,6 +120,7 @@ int main() {
     latitude = deg2rad(latitude);
 
     if (buffer[0] == '1') {
+        // Use NORAD ID (Space-Track.com)
 
         system("bash /Users/cooperwayland/Desktop/NORAD.sh");
 
@@ -117,7 +132,6 @@ int main() {
         scanf("%s", NORAD);
 
         // Get username and password form Credentials file
-        FILE *Credentials;
         Credentials = fopen("Credentials.txt", "r");
         char username[72];
         char password[72];
@@ -144,6 +158,7 @@ int main() {
                  NORAD);
         system(TLE_Command);
     } else if (buffer[0] == '2'){
+        // Manually Enter New TLE
         system("bash /Users/cooperwayland/Desktop/TLE1.sh");
         system("bash /Users/cooperwayland/Desktop/TLE2.sh");
     }
@@ -476,4 +491,26 @@ void string_select(char *s, int index_start, int index_end , char *output, int s
     for (int i = index_start; i <= index_end; i++){
         output[i - index_start] = s[i];
     }
+}
+
+void moveBuffer(char *buffer){
+    FILE *BUFFER;
+    BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
+    fgets(buffer, sizeof buffer, BUFFER);
+    fclose(BUFFER);
+}
+
+void getCredentials(char *username, char *password){
+    FILE *Credentials;
+    Credentials = fopen("Credentials.txt", "r");
+    fgets(username, sizeof username, Credentials);
+    fgets(password, sizeof password, Credentials);
+    fclose(Credentials);
+
+    // Remove extra character form username variable
+    char *e;
+    int index;
+    e = strchr(username, '\n');
+    index = (int) (e - username);
+    username[index] = '\0';
 }
