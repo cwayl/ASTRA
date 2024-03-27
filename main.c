@@ -432,7 +432,7 @@ int main() {
         }
 
         char outputCommand[100];
-        snprintf(outputCommand, sizeof outputCommand,"bash /Users/cooperwayland/Desktop/Monitor.sh %f", Azimuth);
+        snprintf(outputCommand, sizeof outputCommand,"bash /Users/cooperwayland/Desktop/Monitor.sh %f %f", Azimuth, Elevation);
 
         system(outputCommand);
 
