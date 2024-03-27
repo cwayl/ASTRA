@@ -32,7 +32,7 @@
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
 double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity);
 void string_select(char *s, int index_start, int index_end , char *output, int size);
-void moveBuffer(char *buffer);
+void moveBuffer(char *buffer, int size);
 void getCredentials(char *username, char *password);
 
 int main() {
@@ -61,6 +61,9 @@ int main() {
     int epochYear;
     double epoch, inclination, raan, eccentricity, argumentOfPerigee, TLE_meanAnomaly, meanMotion;
     char buffer[50];
+    char temp1[50] = "username";
+    char temp2[50] = "password";
+    char bashCommand[200];
     FILE *BUFFER;
     FILE *Credentials;
     FILE *Station;
@@ -68,29 +71,65 @@ int main() {
 
     while (buffer[0] != '1') {
         system("bash /Users/cooperwayland/Desktop/Start-Menu.sh");
-        moveBuffer(buffer);
+        moveBuffer(buffer, sizeof buffer);
         if (buffer[0] == '2') {
             // Setup Menu
             while (buffer[0] != '4') {
                 system("bash /Users/cooperwayland/Desktop/Setup-menu.sh");
-                moveBuffer(buffer);
+                moveBuffer(buffer, sizeof buffer);
                 if (buffer[0] == '1') {
                     // Station Coordinates
-                    system("bash /Users/cooperwayland/Desktop/Lat.sh");
-                    system("bash /Users/cooperwayland/Desktop/Long.sh");
-                    system("bash /Users/cooperwayland/Desktop/Altitude.sh");
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /Users/cooperwayland/Desktop/Lat.sh");
+                    system(bashCommand);
+                    moveBuffer(buffer,sizeof buffer);
+
+                    Station = fopen("Station.txt", "w");
+                    fprintf(Station, "%s", buffer);
+                    fprintf(Station, "\n");
+                    fclose(Station);
+
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /Users/cooperwayland/Desktop/Long.sh");
+                    system(bashCommand);
+                    moveBuffer(buffer,sizeof buffer);
+
+                    Station = fopen("Station.txt", "ab");
+                    fprintf(Station, "%s", buffer);
+                    fprintf(Station, "\n");
+                    fclose(Station);
+
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /Users/cooperwayland/Desktop/Altitude.sh");
+                    system(bashCommand);
+                    moveBuffer(buffer,sizeof buffer);
+
+                    Station = fopen("Station.txt", "ab");
+                    fprintf(Station, "%s", buffer);
+                    fclose(Station);
+
+
                 } else if (buffer[0] == '2') {
+                    //This is doing somehting wacky
+                    //getCredentials(temp1, temp2);
+
                     // Space-Track.com Credentials
-                    system("bash /Users/cooperwayland/Desktop/Username.sh");
-                    moveBuffer(buffer);
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /Users/cooperwayland/Desktop/Username.sh %s",
+                             temp1);
+                    system(bashCommand);
+                    moveBuffer(buffer,sizeof buffer);
 
                     Credentials = fopen("Credentials.txt", "w");
                     fprintf(Credentials, "%s", buffer);
                     fprintf(Credentials, "\n");
                     fclose(Credentials);
 
-                    system("bash /Users/cooperwayland/Desktop/Password.sh");
-                    moveBuffer(buffer);
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /Users/cooperwayland/Desktop/Password.sh %s",
+                             temp2);
+                    system(bashCommand);
+                    moveBuffer(buffer, sizeof buffer);
 
                     Credentials = fopen("Credentials.txt", "ab");
                     fprintf(Credentials, "%s", buffer);
@@ -102,7 +141,7 @@ int main() {
     }
     // Start ASTRA
     system("bash /Users/cooperwayland/Desktop/Manual-Select.sh");
-    moveBuffer(buffer);
+    moveBuffer(buffer, sizeof buffer);
     // Get lat long and alt from Station file
     Station = fopen("Station.txt", "r");
     char latitudeString[20];
@@ -493,10 +532,10 @@ void string_select(char *s, int index_start, int index_end , char *output, int s
     }
 }
 
-void moveBuffer(char *buffer){
+void moveBuffer(char *buffer, int size){
     FILE *BUFFER;
     BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
-    fgets(buffer, sizeof buffer, BUFFER);
+    fgets(buffer, size, BUFFER);
     fclose(BUFFER);
 }
 
