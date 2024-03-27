@@ -431,8 +431,9 @@ int main() {
             }
         }
 
-        char outputCommand[150];
-        snprintf(outputCommand, sizeof outputCommand,"bash /Users/cooperwayland/Desktop/Monitor.sh %f %f", rad2deg(Azimuth), rad2deg(Elevation));
+        char outputCommand[200];
+        snprintf(outputCommand, sizeof outputCommand,"bash /Users/cooperwayland/Desktop/Monitor.sh %f %f %f",
+                 rad2deg(Azimuth), rad2deg(Elevation), rho_size);
         system(outputCommand);
 
         sleep(1);
