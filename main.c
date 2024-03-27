@@ -76,7 +76,7 @@ int main() {
                 if (buffer[0] == '1') {
                     system("bash /Users/cooperwayland/Desktop/Lat.sh");
                     system("bash /Users/cooperwayland/Desktop/Long.sh");
-
+                    system("bash /Users/cooperwayland/Desktop/Altitude.sh");
                 } else if (buffer[0] == '2') {
                     system("bash /Users/cooperwayland/Desktop/Username.sh");
                     system("bash /Users/cooperwayland/Desktop/Password.sh");
@@ -431,15 +431,12 @@ int main() {
             }
         }
 
-        char outputCommand[100];
-        snprintf(outputCommand, sizeof outputCommand,"bash /Users/cooperwayland/Desktop/Monitor.sh %f %f", Azimuth, Elevation);
-
+        char outputCommand[150];
+        snprintf(outputCommand, sizeof outputCommand,"bash /Users/cooperwayland/Desktop/Monitor.sh %f %f", rad2deg(Azimuth), rad2deg(Elevation));
         system(outputCommand);
 
         sleep(1);
-
     }
-
     return 0;
 }
 
@@ -479,4 +476,3 @@ void string_select(char *s, int index_start, int index_end , char *output, int s
         output[i - index_start] = s[i];
     }
 }
-
