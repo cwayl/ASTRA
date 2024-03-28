@@ -31,9 +31,8 @@
 // Function prototypes
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
 double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity);
-void string_select(char *s, int index_start, int index_end , char *output, int size);
+void string_select(const char *s, int index_start, int index_end , char *output, int size);
 void moveBuffer(char *buffer, int size);
-void getCredentials(char *username, char *password);
 
 int main() {
 
@@ -60,13 +59,17 @@ int main() {
     double latitude, longitude, altitude;
     int epochYear;
     double epoch, inclination, raan, eccentricity, argumentOfPerigee, TLE_meanAnomaly, meanMotion;
-    char buffer[50];
-    char temp1[50] = "username";
-    char temp2[50] = "password";
+    double prevSize = 4000;
+    char buffer[100];
+    char username[72];
+    char password[72];
+    char latitudeString[20];
+    char longitudeString[20];
+    char altitudeString[20];
     char bashCommand[200];
-    FILE *BUFFER;
     FILE *Credentials;
     FILE *Station;
+    FILE *TLE;
     buffer[0] = 'a';
 
     while (buffer[0] != '1') {
@@ -79,8 +82,16 @@ int main() {
                 moveBuffer(buffer, sizeof buffer);
                 if (buffer[0] == '1') {
                     // Station Coordinates
+
+                    Station = fopen("Station.txt", "r");
+                    fgets(latitudeString,sizeof latitudeString, Station);
+                    fgets(longitudeString,sizeof longitudeString, Station);
+                    fgets(altitudeString,sizeof altitudeString, Station);
+                    fclose(Station);
+
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /Users/cooperwayland/Desktop/Lat.sh");
+                             "bash /Users/cooperwayland/Desktop/Lat.sh %s",
+                             latitudeString);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
 
@@ -90,7 +101,8 @@ int main() {
                     fclose(Station);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /Users/cooperwayland/Desktop/Long.sh");
+                             "bash /Users/cooperwayland/Desktop/Long.sh %s",
+                             longitudeString);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
 
@@ -100,7 +112,8 @@ int main() {
                     fclose(Station);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /Users/cooperwayland/Desktop/Altitude.sh");
+                             "bash /Users/cooperwayland/Desktop/Altitude.sh %s",
+                             altitudeString);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
 
@@ -108,15 +121,24 @@ int main() {
                     fprintf(Station, "%s", buffer);
                     fclose(Station);
 
-
                 } else if (buffer[0] == '2') {
-                    //This is doing somehting wacky
-                    //getCredentials(temp1, temp2);
-
                     // Space-Track.com Credentials
+
+                    Credentials = fopen("Credentials.txt", "r");
+                    fgets(username, sizeof username, Credentials);
+                    fgets(password, sizeof password, Credentials);
+                    fclose(Credentials);
+
+                    // Remove extra character form username variable
+                    char *e;
+                    int index;
+                    e = strchr(username, '\n');
+                    index = (int) (e - username);
+                    username[index] = '\0';
+
                     snprintf(bashCommand, sizeof(bashCommand),
                              "bash /Users/cooperwayland/Desktop/Username.sh %s",
-                             temp1);
+                             username);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
 
@@ -127,7 +149,7 @@ int main() {
 
                     snprintf(bashCommand, sizeof(bashCommand),
                              "bash /Users/cooperwayland/Desktop/Password.sh %s",
-                             temp2);
+                             password);
                     system(bashCommand);
                     moveBuffer(buffer, sizeof buffer);
 
@@ -144,9 +166,6 @@ int main() {
     moveBuffer(buffer, sizeof buffer);
     // Get lat long and alt from Station file
     Station = fopen("Station.txt", "r");
-    char latitudeString[20];
-    char longitudeString[20];
-    char altitudeString[20];
     fgets(latitudeString,sizeof latitudeString, Station);
     fgets(longitudeString,sizeof longitudeString, Station);
     fgets(altitudeString,sizeof altitudeString, Station);
@@ -162,18 +181,14 @@ int main() {
         // Use NORAD ID (Space-Track.com)
 
         system("bash /Users/cooperwayland/Desktop/NORAD.sh");
+        moveBuffer(buffer, sizeof buffer);
 
         // Get the NORAD ID of the satellite
-        char NORAD[7];
         char cookie_Command[150];
         char TLE_Command[150];
-        printf("NORAD ID: ");
-        scanf("%s", NORAD);
 
         // Get username and password form Credentials file
         Credentials = fopen("Credentials.txt", "r");
-        char username[72];
-        char password[72];
         fgets(username, sizeof username, Credentials);
         fgets(password, sizeof password, Credentials);
         fclose(Credentials);
@@ -194,16 +209,27 @@ int main() {
         // Puts TLE in TLE.txt
         snprintf(TLE_Command, sizeof(TLE_Command),
                  "curl --limit-rate 100K --cookie cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > TLE.txt",
-                 NORAD);
+                 buffer);
         system(TLE_Command);
+
     } else if (buffer[0] == '2'){
         // Manually Enter New TLE
         system("bash /Users/cooperwayland/Desktop/TLE1.sh");
+        moveBuffer(buffer, sizeof buffer);
+        TLE = fopen("TLE.txt", "w");
+        fprintf(TLE, "%s", buffer);
+        fprintf(TLE, "\n");
+        fclose(TLE);
+
         system("bash /Users/cooperwayland/Desktop/TLE2.sh");
+        moveBuffer(buffer, sizeof buffer);
+        TLE = fopen("TLE.txt", "ab");
+        fprintf(TLE, "%s", buffer);
+        fclose(TLE);
+
     }
 
     // Open TLE.txt and read lines to strings
-    FILE *TLE;
     TLE = fopen("TLE.txt", "r");
     char TLE_Line1[72];
     char TLE_Line2[72];
@@ -212,23 +238,23 @@ int main() {
     fclose(TLE);
 
     // Copy numbers from strings to usable variables
-    char test[13];
-    string_select(TLE_Line1, 18, 19, test, sizeof(test));
-    epochYear = atoi(test) + 2000;
-    string_select(TLE_Line1, 20, 31, test, sizeof(test));
-    epoch = atof(test);
-    string_select(TLE_Line2, 8, 15, test, sizeof(test));
-    inclination = atof(test);
-    string_select(TLE_Line2, 17, 24, test, sizeof(test));
-    raan = atof(test);
-    string_select(TLE_Line2, 26, 32, test, sizeof(test));
-    eccentricity = atof(test) * 0.0000001;
-    string_select(TLE_Line2, 34, 41, test, sizeof(test));
-    argumentOfPerigee = atof(test);
-    string_select(TLE_Line2, 43, 50, test, sizeof(test));
-    TLE_meanAnomaly = atof(test);
-    string_select(TLE_Line2, 52, 62, test, sizeof(test));
-    meanMotion = atof(test);
+    char splitter[13];
+    string_select(TLE_Line1, 18, 19, splitter, sizeof(splitter));
+    epochYear = atoi(splitter) + 2000;
+    string_select(TLE_Line1, 20, 31, splitter, sizeof(splitter));
+    epoch = atof(splitter);
+    string_select(TLE_Line2, 8, 15, splitter, sizeof(splitter));
+    inclination = atof(splitter);
+    string_select(TLE_Line2, 17, 24, splitter, sizeof(splitter));
+    raan = atof(splitter);
+    string_select(TLE_Line2, 26, 32, splitter, sizeof(splitter));
+    eccentricity = atof(splitter) * 0.0000001;
+    string_select(TLE_Line2, 34, 41, splitter, sizeof(splitter));
+    argumentOfPerigee = atof(splitter);
+    string_select(TLE_Line2, 43, 50, splitter, sizeof(splitter));
+    TLE_meanAnomaly = atof(splitter);
+    string_select(TLE_Line2, 52, 62, splitter, sizeof(splitter));
+    meanMotion = atof(splitter);
 
     // Step 2: Calculate h (specific angular momentum)
 
@@ -454,6 +480,9 @@ int main() {
         rho_R[1][0] = rho_R[1][0] / rho_size;
         rho_R[2][0] = rho_R[2][0] / rho_size;
 
+        double rangeRate = rho_size - prevSize ;
+        prevSize = rho_size;
+
         // convert unit vector to Azimuth and Elevation
         // Variations of Equation 5.58
         double Elevation = asin(rho_R[2][0]);
@@ -465,8 +494,8 @@ int main() {
         // Step 10: Check if Elevation is above horizon
         char scriptMessage[40];
         int azimuthInt, elevationInt;
-//      if the satellite is below the horizon move to home other wise move to vector position
-//      the current position of the rotator is checked to make sure we dont repeat commands
+//      if the satellite is below the horizon move to home otherwise move to vector position
+//      the current position of the rotator is checked to make sure we don't repeat commands
         if (rho_R[2][0] < 0) {
             if((prevAzimuth != 180) || (prevElevation != 0)){
                 system("/home/astra/rotatorScript.sh 180 0");
@@ -486,8 +515,12 @@ int main() {
         }
 
         char outputCommand[200];
-        snprintf(outputCommand, sizeof outputCommand,"bash /Users/cooperwayland/Desktop/Monitor.sh %f %f %f",
-                 rad2deg(Azimuth), rad2deg(Elevation), rho_size);
+        snprintf(outputCommand, sizeof outputCommand,
+                 "bash /Users/cooperwayland/Desktop/Monitor.sh %f %f %f %f",
+                 rad2deg(Azimuth),
+                 rad2deg(Elevation),
+                 rho_size,
+                 rangeRate);
         system(outputCommand);
 
         sleep(1);
@@ -520,9 +553,9 @@ double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity){
     return fmod(2* atan(sqrt( (1+eccentricity)/(1-eccentricity)) * tan(eccentricAnomaly/2)) + 2*M_PI,2*M_PI);
 }
 
-// sets the output string to zero then copies the specified part of the string to output
-void string_select(char *s, int index_start, int index_end , char *output, int size)
+void string_select(const char *s, int index_start, int index_end , char *output, int size)
 {
+    // sets the output string to zero then copies the specified part of the string to output
     for (int i = 0; i < size; i++) {
         output[i] = 0;
     }
@@ -537,19 +570,4 @@ void moveBuffer(char *buffer, int size){
     BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
     fgets(buffer, size, BUFFER);
     fclose(BUFFER);
-}
-
-void getCredentials(char *username, char *password){
-    FILE *Credentials;
-    Credentials = fopen("Credentials.txt", "r");
-    fgets(username, sizeof username, Credentials);
-    fgets(password, sizeof password, Credentials);
-    fclose(Credentials);
-
-    // Remove extra character form username variable
-    char *e;
-    int index;
-    e = strchr(username, '\n');
-    index = (int) (e - username);
-    username[index] = '\0';
 }
