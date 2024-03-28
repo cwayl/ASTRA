@@ -78,7 +78,7 @@ int main() {
         if (buffer[0] == '2') {
             // Setup Menu
             while (buffer[0] != '4') {
-                system("bash /home/astra/ASTRA/dialogScripts/Setup-menu.sh");
+                system("bash /home/astra/ASTRA/dialogScripts/Setup-Menu.sh");
                 moveBuffer(buffer, sizeof buffer);
                 if (buffer[0] == '1') {
                     // Station Coordinates
