@@ -9,4 +9,4 @@ dialog --title "Setup Menu" \
        2 "Space-Track.com Credentials" \
        3 "" \
        4 " Back to Start Menu" \
-       2>/Users/cooperwayland/Desktop/text.txt
+       2>/home/astra/ASTRA/dialogScripts/text.txt
