@@ -8,4 +8,3 @@ dialog --title "Start Menu" \
        1 "Start ASTRA" \
        2 "Setup Menu" \
        2>/Users/cooperwayland/Desktop/text.txt
-       
