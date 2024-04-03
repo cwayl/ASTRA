@@ -73,12 +73,12 @@ int main() {
     buffer[0] = 'a';
 
     while (buffer[0] != '1') {
-        system("bash /home/astra/ASTRA/dialogScripts/Start-Menu.sh");
+        system("bash /Users/cooperwayland/Desktop/Start-Menu.sh");
         moveBuffer(buffer, sizeof buffer);
         if (buffer[0] == '2') {
             // Setup Menu
             while (buffer[0] != '4') {
-                system("bash /home/astra/ASTRA/dialogScripts/Setup-Menu.sh");
+                system("bash /Users/cooperwayland/Desktop/Setup-menu.sh");
                 moveBuffer(buffer, sizeof buffer);
                 if (buffer[0] == '1') {
                     // Station Coordinates
@@ -90,7 +90,7 @@ int main() {
                     fclose(Station);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /home/astra/ASTRA/dialogScripts/Lat.sh %s",
+                             "bash /Users/cooperwayland/Desktop/Lat.sh %s",
                              latitudeString);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
@@ -101,7 +101,7 @@ int main() {
                     fclose(Station);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /home/astra/ASTRA/dialogScripts/Long.sh %s",
+                             "bash /Users/cooperwayland/Desktop/Long.sh %s",
                              longitudeString);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
@@ -112,7 +112,7 @@ int main() {
                     fclose(Station);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /home/astra/ASTRA/dialogScripts/Altitude.sh %s",
+                             "bash /Users/cooperwayland/Desktop/Altitude.sh %s",
                              altitudeString);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
@@ -137,7 +137,7 @@ int main() {
                     username[index] = '\0';
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /home/astra/ASTRA/dialogScripts/Username.sh %s",
+                             "bash /Users/cooperwayland/Desktop/Username.sh %s",
                              username);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
@@ -148,7 +148,7 @@ int main() {
                     fclose(Credentials);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /home/astra/ASTRA/dialogScripts/Password.sh %s",
+                             "bash /Users/cooperwayland/Desktop/Password.sh %s",
                              password);
                     system(bashCommand);
                     moveBuffer(buffer, sizeof buffer);
@@ -162,7 +162,7 @@ int main() {
         }
     }
     // Start ASTRA
-    system("bash /home/astra/ASTRA/dialogScripts/Manual-Select.sh");
+    system("bash /Users/cooperwayland/Desktop/Manual-Select.sh");
     moveBuffer(buffer, sizeof buffer);
     // Get lat long and alt from Station file
     Station = fopen("Station.txt", "r");
@@ -180,7 +180,7 @@ int main() {
     if (buffer[0] == '1') {
         // Use NORAD ID (Space-Track.com)
 
-        system("bash /home/astra/ASTRA/dialogScripts/NORAD.sh");
+        system("bash /Users/cooperwayland/Desktop/NORAD.sh");
         moveBuffer(buffer, sizeof buffer);
 
         // Get the NORAD ID of the satellite
@@ -214,14 +214,14 @@ int main() {
 
     } else if (buffer[0] == '2'){
         // Manually Enter New TLE
-        system("bash /home/astra/ASTRA/dialogScripts/TLE1.sh");
+        system("bash /Users/cooperwayland/Desktop/TLE1.sh");
         moveBuffer(buffer, sizeof buffer);
         TLE = fopen("TLE.txt", "w");
         fprintf(TLE, "%s", buffer);
         fprintf(TLE, "\n");
         fclose(TLE);
 
-        system("bash /home/astra/ASTRA/dialogScripts/TLE2.sh");
+        system("bash /Users/cooperwayland/Desktop/TLE2.sh");
         moveBuffer(buffer, sizeof buffer);
         TLE = fopen("TLE.txt", "ab");
         fprintf(TLE, "%s", buffer);
@@ -272,79 +272,17 @@ int main() {
     // Substituting Equation 2.73 we can set r = r_p and theta = 0
     h = sqrt(EARTH_MU * a * (1 - pow(eccentricity,2)));
 
-    // Step 5 is out of order because the first part is not dependent on time (and therefore does not need to be in the loop) but the second part is.
-    // Step 5a: Calculate the Rotation Matrix
+    // Perturbations
+    double w_dot; // Average rate of change in argument of perigee
+    double omega_dot; // Average rate of change in RAAN
 
     // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
     double raanRad = deg2rad(raan);
     double inclinationRad = deg2rad(inclination);
     double argumentOfPerigeeRad = deg2rad(argumentOfPerigee);
 
-    // Equation 4.49
-    double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
-            {cos(argumentOfPerigeeRad), sin(argumentOfPerigeeRad), 0},
-            {-sin(argumentOfPerigeeRad), cos(argumentOfPerigeeRad), 0},
-            {0, 0, 1},
-    };
-    // Equation 4.32
-    double R_2[NUM_ROWS_Q][NUM_COLS_Q] = {
-            {1, 0 ,0},
-            {0, cos(inclinationRad), sin(inclinationRad)},
-            {0, -sin(inclinationRad), cos(inclinationRad)}
-
-    };
-    // Equation 4.34
-    double R_3[NUM_ROWS_Q][NUM_COLS_Q] = {
-            {cos(raanRad), sin(raanRad), 0},
-            {-sin(raanRad), cos(raanRad), 0},
-            {0, 0, 1},
-    };
-
-    double R_1_2resultMatrix[NUM_ROWS_Q][NUM_COLS_Q]={
-            {0, 0, 0},
-            {0, 0, 0},
-            {0, 0, 0}
-    };
-
-    double Q_Matrix[NUM_ROWS_Q][NUM_COLS_Q]={
-            {0, 0, 0},
-            {0, 0, 0},
-            {0, 0, 0}
-    };
-
-    // Equation 4.49 for next four loops
-    // Perform matrix multiplication R_1 * R_2
-    for (int i = 0; i < NUM_ROWS_Q; i++) {
-        for (int j = 0; j < NUM_COLS_Q; j++) {
-            R_1_2resultMatrix[i][j] = 0; // Initialize the element to 0
-            for (int k = 0; k < NUM_COLS_Q; k++) {
-                R_1_2resultMatrix[i][j] += R_1[i][k] * R_2[k][j];
-            }
-        }
-    }
-
-    // Perform matrix multiplication (R_1 * R_2) * R_3
-    for (int i = 0; i < NUM_ROWS_Q; i++) {
-        for (int j = 0; j < NUM_COLS_Q; j++) {
-            Q_Matrix[i][j] = 0; // Initialize the element to 0
-            for (int k = 0; k < NUM_COLS_Q; k++) {
-                Q_Matrix[i][j] += R_1_2resultMatrix[i][k] * R_3[k][j];
-            }
-        }
-    }
-
-    double Q_Matrix_New[NUM_ROWS_Q][NUM_COLS_Q]= {
-            {0, 0, 0},
-            {0, 0, 0},
-            {0, 0, 0}
-    };
-
-    // Transpose the Q_Matrix
-    for (int i = 0; i < NUM_ROWS_Q; i++) {
-        for (int j = 0; j < NUM_COLS_Q; j++) {
-            Q_Matrix_New[j][i] = Q_Matrix[i][j];
-        }
-    }
+    omega_dot = -((3.0/2.0) * ((J_2 * sqrt(EARTH_MU) * pow(EARTH_RADIUS_EQUATORIAL, 2)) / (pow(a, 7.0/2) * pow((1 - pow(eccentricity, 2)), 2)))) * (cos(inclinationRad));
+    w_dot = -(3.0/2.0) * ((J_2 * sqrt(EARTH_MU) * pow(EARTH_RADIUS_EQUATORIAL, 2)) /( (pow(a, 7.0/2) * pow((1 - pow(eccentricity, 2)), 2)))) * ((5.0/2.0) * pow((sin(inclinationRad)), 2) -2);
 
     int prevElevation, prevAzimuth;
     prevAzimuth = -1;
@@ -366,7 +304,7 @@ int main() {
         // Step 3: Calculate True Anomaly
 
         double dayOfYear = ptr->tm_yday + 1 + UT/24;
-        // Time since the TLE was observed
+        // Time since the TLE was observed in days
         // Assumes the TLE and current year are the same
         double delta_t = dayOfYear - epoch;
         double delta_MeanAnamoly = delta_t * meanMotion * 360;
@@ -388,6 +326,80 @@ int main() {
         r_perifocal[2][0] = 0; // z-component
 
         //Step 5: Rotate position vector to geo equatorial frame
+
+        double currentArgumentOfPerigeeRad, currentRaanRad;
+        //TESTING
+        currentArgumentOfPerigeeRad = argumentOfPerigeeRad + w_dot * delta_t * 24 * 60 * 60;
+        currentRaanRad = raanRad + omega_dot * delta_t * 24 * 60 * 60;
+
+        // Step 5a: Calculate the Rotation Matrix
+
+        // Equation 4.49
+        double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
+                {cos(currentArgumentOfPerigeeRad), sin(currentArgumentOfPerigeeRad), 0},
+                {-sin(currentArgumentOfPerigeeRad), cos(currentArgumentOfPerigeeRad), 0},
+                {0, 0, 1},
+        };
+        // Equation 4.32
+        double R_2[NUM_ROWS_Q][NUM_COLS_Q] = {
+                {1, 0 ,0},
+                {0, cos(inclinationRad), sin(inclinationRad)},
+                {0, -sin(inclinationRad), cos(inclinationRad)}
+
+        };
+        // Equation 4.34
+        double R_3[NUM_ROWS_Q][NUM_COLS_Q] = {
+                {cos(currentRaanRad), sin(currentRaanRad), 0},
+                {-sin(currentRaanRad), cos(currentRaanRad), 0},
+                {0, 0, 1},
+        };
+
+        double R_1_2resultMatrix[NUM_ROWS_Q][NUM_COLS_Q]={
+                {0, 0, 0},
+                {0, 0, 0},
+                {0, 0, 0}
+        };
+
+        double Q_Matrix[NUM_ROWS_Q][NUM_COLS_Q]={
+                {0, 0, 0},
+                {0, 0, 0},
+                {0, 0, 0}
+        };
+
+        // Equation 4.49 for next four loops
+        // Perform matrix multiplication R_1 * R_2
+        for (int i = 0; i < NUM_ROWS_Q; i++) {
+            for (int j = 0; j < NUM_COLS_Q; j++) {
+                R_1_2resultMatrix[i][j] = 0; // Initialize the element to 0
+                for (int k = 0; k < NUM_COLS_Q; k++) {
+                    R_1_2resultMatrix[i][j] += R_1[i][k] * R_2[k][j];
+                }
+            }
+        }
+
+        // Perform matrix multiplication (R_1 * R_2) * R_3
+        for (int i = 0; i < NUM_ROWS_Q; i++) {
+            for (int j = 0; j < NUM_COLS_Q; j++) {
+                Q_Matrix[i][j] = 0; // Initialize the element to 0
+                for (int k = 0; k < NUM_COLS_Q; k++) {
+                    Q_Matrix[i][j] += R_1_2resultMatrix[i][k] * R_3[k][j];
+                }
+            }
+        }
+
+        double Q_Matrix_New[NUM_ROWS_Q][NUM_COLS_Q]= {
+                {0, 0, 0},
+                {0, 0, 0},
+                {0, 0, 0}
+        };
+
+        // Transpose the Q_Matrix
+        for (int i = 0; i < NUM_ROWS_Q; i++) {
+            for (int j = 0; j < NUM_COLS_Q; j++) {
+                Q_Matrix_New[j][i] = Q_Matrix[i][j];
+            }
+        }
+
         //      5b: Multiply the position vector and Rotation Matrix
 
         // Calculate the geocentric equatorial frame position vector
@@ -516,7 +528,7 @@ int main() {
 
         char outputCommand[200];
         snprintf(outputCommand, sizeof outputCommand,
-                 "bash /home/astra/ASTRA/dialogScripts/Monitor.sh %f %f %f %f",
+                 "bash /Users/cooperwayland/Desktop/Monitor.sh %f %f %f %f",
                  rad2deg(Azimuth),
                  rad2deg(Elevation),
                  rho_size,
@@ -567,7 +579,7 @@ void string_select(const char *s, int index_start, int index_end , char *output,
 
 void moveBuffer(char *buffer, int size){
     FILE *BUFFER;
-    BUFFER = fopen("/home/astra/ASTRA/dialogScripts/text.txt", "r");
+    BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
     fgets(buffer, size, BUFFER);
     fclose(BUFFER);
 }
