@@ -209,7 +209,7 @@ int main() {
         // Use NORAD ID to make API command
         // Puts TLE in TLE.txt
         snprintf(TLE_Command, sizeof(TLE_Command),
-                 "curl --limit-rate 100K --cookie /home/astra/ASTRA/cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > /home/astra/ASTRA/TLE.txt",
+                 "curl --limit-rate 100K --cookie /home/astra/ASTRA/cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > TLE.txt",
                  buffer);
         system(TLE_Command);
 
