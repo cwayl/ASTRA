@@ -7,4 +7,4 @@ dialog --title "Start Menu" \
        --menu "Select" 12 45 25 \
        1 "Start ASTRA" \
        2 "Setup Menu" \
-       2>/Users/cooperwayland/Desktop/text.txt
+       2>/home/astra/ASTRA/text.txt

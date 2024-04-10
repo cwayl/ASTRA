@@ -8,4 +8,4 @@ dialog --title "Mode Select" \
        1 "Use NORAD ID (Space-Track.com)" \
        2 "Manually Enter New TLE" \
        3 "Use current TLE" \
-       2>/Users/cooperwayland/Desktop/text.txt
+       2>/home/astra/ASTRA/text.txt
