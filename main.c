@@ -189,7 +189,7 @@ int main() {
         char TLE_Command[150];
 
         // Get username and password form Credentials file
-        Credentials = fopen("Credentials.txt", "r");
+        Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "r");
         fgets(username, sizeof username, Credentials);
         fgets(password, sizeof password, Credentials);
         fclose(Credentials);
@@ -217,21 +217,21 @@ int main() {
         // Manually Enter New TLE
         system("bash /home/astra/ASTRA/TLE1.sh");
         moveBuffer(buffer, sizeof buffer);
-        TLE = fopen("TLE.txt", "w");
+        TLE = fopen("/home/astra/ASTRA/TLE.txt", "w");
         fprintf(TLE, "%s", buffer);
         fprintf(TLE, "\n");
         fclose(TLE);
 
         system("bash /home/astra/ASTRA/TLE2.sh");
         moveBuffer(buffer, sizeof buffer);
-        TLE = fopen("TLE.txt", "ab");
+        TLE = fopen("/home/astra/ASTRA/TLE.txt", "ab");
         fprintf(TLE, "%s", buffer);
         fclose(TLE);
 
     }
 
     // Open TLE.txt and read lines to strings
-    TLE = fopen("TLE.txt", "r");
+    TLE = fopen("/home/astra/ASTRA/TLE.txt", "r");
     char TLE_Line1[72];
     char TLE_Line2[72];
     fgets(TLE_Line1,sizeof TLE_Line1, TLE);
