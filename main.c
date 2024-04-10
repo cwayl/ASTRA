@@ -84,7 +84,7 @@ int main() {
                 if (buffer[0] == '1') {
                     // Station Coordinates
 
-                    Station = fopen("Station.txt", "r");
+                    Station = fopen("/home/astra/ASTRA/Station.txt", "r");
                     fgets(latitudeString,sizeof latitudeString, Station);
                     fgets(longitudeString,sizeof longitudeString, Station);
                     fgets(altitudeString,sizeof altitudeString, Station);
@@ -96,7 +96,7 @@ int main() {
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
 
-                    Station = fopen("Station.txt", "w");
+                    Station = fopen("/home/astra/ASTRA/Station.txt", "w");
                     fprintf(Station, "%s", buffer);
                     fprintf(Station, "\n");
                     fclose(Station);
@@ -107,7 +107,7 @@ int main() {
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
 
-                    Station = fopen("Station.txt", "ab");
+                    Station = fopen("/home/astra/ASTRA/Station.txt", "ab");
                     fprintf(Station, "%s", buffer);
                     fprintf(Station, "\n");
                     fclose(Station);
@@ -118,14 +118,14 @@ int main() {
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
 
-                    Station = fopen("Station.txt", "ab");
+                    Station = fopen("/home/astra/ASTRA/Station.txt", "ab");
                     fprintf(Station, "%s", buffer);
                     fclose(Station);
 
                 } else if (buffer[0] == '2') {
                     // Space-Track.com Credentials
 
-                    Credentials = fopen("Credentials.txt", "r");
+                    Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "r");
                     fgets(username, sizeof username, Credentials);
                     fgets(password, sizeof password, Credentials);
                     fclose(Credentials);
@@ -143,7 +143,7 @@ int main() {
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
 
-                    Credentials = fopen("Credentials.txt", "w");
+                    Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "w");
                     fprintf(Credentials, "%s", buffer);
                     fprintf(Credentials, "\n");
                     fclose(Credentials);
