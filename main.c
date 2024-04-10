@@ -74,12 +74,12 @@ int main() {
     buffer[0] = 'a';
 
     while (buffer[0] != '1') {
-        system("bash /Users/cooperwayland/Desktop/Start-Menu.sh");
+        system("bash /home/astra/ASTRA/Start-Menu.sh");
         moveBuffer(buffer, sizeof buffer);
         if (buffer[0] == '2') {
             // Setup Menu
             while (buffer[0] != '4') {
-                system("bash /Users/cooperwayland/Desktop/Setup-menu.sh");
+                system("bash /home/astra/ASTRA/Setup-menu.sh");
                 moveBuffer(buffer, sizeof buffer);
                 if (buffer[0] == '1') {
                     // Station Coordinates
@@ -91,7 +91,7 @@ int main() {
                     fclose(Station);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /Users/cooperwayland/Desktop/Lat.sh %s",
+                             "bash /home/astra/ASTRA/Lat.sh %s",
                              latitudeString);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
@@ -102,7 +102,7 @@ int main() {
                     fclose(Station);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /Users/cooperwayland/Desktop/Long.sh %s",
+                             "bash /home/astra/ASTRA/Long.sh %s",
                              longitudeString);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
@@ -113,7 +113,7 @@ int main() {
                     fclose(Station);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /Users/cooperwayland/Desktop/Altitude.sh %s",
+                             "bash /home/astra/ASTRA/Altitude.sh %s",
                              altitudeString);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
@@ -138,7 +138,7 @@ int main() {
                     username[index] = '\0';
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /Users/cooperwayland/Desktop/Username.sh %s",
+                             "bash /home/astra/ASTRA/Username.sh %s",
                              username);
                     system(bashCommand);
                     moveBuffer(buffer,sizeof buffer);
@@ -149,7 +149,7 @@ int main() {
                     fclose(Credentials);
 
                     snprintf(bashCommand, sizeof(bashCommand),
-                             "bash /Users/cooperwayland/Desktop/Password.sh %s",
+                             "bash /home/astra/ASTRA/Password.sh %s",
                              password);
                     system(bashCommand);
                     moveBuffer(buffer, sizeof buffer);
@@ -163,7 +163,7 @@ int main() {
         }
     }
     // Start ASTRA
-    system("bash /Users/cooperwayland/Desktop/Manual-Select.sh");
+    system("bash /home/astra/ASTRA/Manual-Select.sh");
     moveBuffer(buffer, sizeof buffer);
     // Get lat long and alt from Station file
     Station = fopen("Station.txt", "r");
@@ -181,7 +181,7 @@ int main() {
     if (buffer[0] == '1') {
         // Use NORAD ID (Space-Track.com)
 
-        system("bash /Users/cooperwayland/Desktop/NORAD.sh");
+        system("bash /home/astra/ASTRA/NORAD.sh");
         moveBuffer(buffer, sizeof buffer);
 
         // Get the NORAD ID of the satellite
@@ -215,14 +215,14 @@ int main() {
 
     } else if (buffer[0] == '2'){
         // Manually Enter New TLE
-        system("bash /Users/cooperwayland/Desktop/TLE1.sh");
+        system("bash /home/astra/ASTRA/TLE1.sh");
         moveBuffer(buffer, sizeof buffer);
         TLE = fopen("TLE.txt", "w");
         fprintf(TLE, "%s", buffer);
         fprintf(TLE, "\n");
         fclose(TLE);
 
-        system("bash /Users/cooperwayland/Desktop/TLE2.sh");
+        system("bash /home/astra/ASTRA/TLE2.sh");
         moveBuffer(buffer, sizeof buffer);
         TLE = fopen("TLE.txt", "ab");
         fprintf(TLE, "%s", buffer);
@@ -529,7 +529,7 @@ int main() {
 
         char outputCommand[200];
         snprintf(outputCommand, sizeof outputCommand,
-                 "bash /Users/cooperwayland/Desktop/Monitor.sh %f %f %f %f",
+                 "bash /home/astra/ASTRA/Monitor.sh %f %f %f %f",
                  rad2deg(Azimuth),
                  rad2deg(Elevation),
                  rho_size,
@@ -592,7 +592,7 @@ void string_select(const char *s, int index_start, int index_end , char *output,
 
 void moveBuffer(char *buffer, int size){
     FILE *BUFFER;
-    BUFFER = fopen("/Users/cooperwayland/Desktop/text.txt", "r");
+    BUFFER = fopen("/home/astra/ASTRA/text.txt", "r");
     fgets(buffer, size, BUFFER);
     fclose(BUFFER);
 }
