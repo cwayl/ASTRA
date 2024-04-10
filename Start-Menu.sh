@@ -6,5 +6,5 @@ dialog --title "Start Menu" \
        --nocancel \
        --menu "Select" 12 45 25 \
        1 "Start ASTRA" \
-       2 "Setup Menu" \
+       2 "Settings Menu" \
        2>/home/astra/ASTRA/text.txt
