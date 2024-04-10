@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # show an inputbox
-dialog --title "Space-Track.com Credentials" \
+dialog --title "Space-Track.org Credentials" \
        --backtitle "ASTRA" \
        --nocancel \
-       --inputbox "Enter your Space-Track.com password " 8 60 "$1" 2>/home/astra/ASTRA/text.txt
+       --inputbox "Enter your Space-Track.org password " 8 60 "$1" 2>/home/astra/ASTRA/text.txt
 

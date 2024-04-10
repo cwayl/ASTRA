@@ -123,7 +123,7 @@ int main() {
                     fclose(Station);
 
                 } else if (buffer[0] == '2') {
-                    // Space-Track.com Credentials
+                    // Space-Track.org Credentials
 
                     Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "r");
                     fgets(username, sizeof username, Credentials);
@@ -179,7 +179,7 @@ int main() {
     latitude = deg2rad(latitude);
 
     if (buffer[0] == '1') {
-        // Use NORAD ID (Space-Track.com)
+        // Use NORAD ID (Space-Track.org)
 
         system("bash /home/astra/ASTRA/NORAD.sh");
         moveBuffer(buffer, sizeof buffer);
