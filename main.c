@@ -185,8 +185,8 @@ int main() {
         moveBuffer(buffer, sizeof buffer);
 
         // Get the NORAD ID of the satellite
-        char cookie_Command[150];
-        char TLE_Command[150];
+        char cookie_Command[250];
+        char TLE_Command[250];
 
         // Get username and password form Credentials file
         Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "r");
