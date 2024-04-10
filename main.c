@@ -63,13 +63,14 @@ int main() {
     char buffer[100];
     char username[72];
     char password[72];
-    char latitudeString[20];
-    char longitudeString[20];
-    char altitudeString[20];
+    char latitudeString[50];
+    char longitudeString[50];
+    char altitudeString[50];
     char bashCommand[200];
     FILE *Credentials;
     FILE *Station;
     FILE *TLE;
+    FILE *OUTPUT;
     buffer[0] = 'a';
 
     while (buffer[0] != '1') {
@@ -534,6 +535,16 @@ int main() {
                  rho_size,
                  rangeRate);
         system(outputCommand);
+
+        char outputingThings[200];
+        snprintf(outputingThings, sizeof outputingThings,
+                 "%f, %f, %s",
+                 rad2deg(Azimuth),
+                 rad2deg(Elevation),
+                 ctime(&t));
+        OUTPUT = fopen("testSomething.txt", "ab");
+        fprintf(OUTPUT, "%s", outputingThings);
+        fclose(OUTPUT);
 
         sleep(1);
     }
