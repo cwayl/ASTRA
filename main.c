@@ -154,7 +154,7 @@ int main() {
                     system(bashCommand);
                     moveBuffer(buffer, sizeof buffer);
 
-                    Credentials = fopen("Credentials.txt", "ab");
+                    Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "ab");
                     fprintf(Credentials, "%s", buffer);
                     fclose(Credentials);
 
@@ -166,7 +166,7 @@ int main() {
     system("bash /home/astra/ASTRA/Manual-Select.sh");
     moveBuffer(buffer, sizeof buffer);
     // Get lat long and alt from Station file
-    Station = fopen("Station.txt", "r");
+    Station = fopen("/home/astra/ASTRA/Station.txt", "r");
     fgets(latitudeString,sizeof latitudeString, Station);
     fgets(longitudeString,sizeof longitudeString, Station);
     fgets(altitudeString,sizeof altitudeString, Station);
