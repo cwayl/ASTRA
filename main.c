@@ -31,7 +31,8 @@
 // Function prototypes
 double solveKeplersEquation(double meanAnomaly, double eccentricity);
 double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity);
-void string_select(char *s, int index_start, int index_end , char *output, int size);
+void string_select(const char *s, int index_start, int index_end , char *output, int size);
+void moveBuffer(char *buffer, int size);
 
 int main() {
 
@@ -58,13 +59,114 @@ int main() {
     double latitude, longitude, altitude;
     int epochYear;
     double epoch, inclination, raan, eccentricity, argumentOfPerigee, TLE_meanAnomaly, meanMotion;
-
-    // Get lat long and alt from Station file
+    double prevSize = 4000;
+    char buffer[100];
+    char username[72];
+    char password[72];
+    char latitudeString[50];
+    char longitudeString[50];
+    char altitudeString[50];
+    char bashCommand[200];
+    FILE *Credentials;
     FILE *Station;
-    Station = fopen("Station.txt", "r");
-    char latitudeString[20];
-    char longitudeString[20];
-    char altitudeString[20];
+    FILE *TLE;
+//    FILE *OUTPUT;
+    buffer[0] = 'a';
+
+    while (buffer[0] != '1') {
+        system("bash /home/astra/ASTRA/Start-Menu.sh");
+        moveBuffer(buffer, sizeof buffer);
+        if (buffer[0] == '2') {
+            // Setup Menu
+            while (buffer[0] != '4') {
+                system("bash /home/astra/ASTRA/Setup-Menu.sh");
+                moveBuffer(buffer, sizeof buffer);
+                if (buffer[0] == '1') {
+                    // Station Coordinates
+
+                    Station = fopen("/home/astra/ASTRA/Station.txt", "r");
+                    fgets(latitudeString,sizeof latitudeString, Station);
+                    fgets(longitudeString,sizeof longitudeString, Station);
+                    fgets(altitudeString,sizeof altitudeString, Station);
+                    fclose(Station);
+
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /home/astra/ASTRA/Lat.sh %s",
+                             latitudeString);
+                    system(bashCommand);
+                    moveBuffer(buffer,sizeof buffer);
+
+                    Station = fopen("/home/astra/ASTRA/Station.txt", "w");
+                    fprintf(Station, "%s", buffer);
+                    fprintf(Station, "\n");
+                    fclose(Station);
+
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /home/astra/ASTRA/Long.sh %s",
+                             longitudeString);
+                    system(bashCommand);
+                    moveBuffer(buffer,sizeof buffer);
+
+                    Station = fopen("/home/astra/ASTRA/Station.txt", "ab");
+                    fprintf(Station, "%s", buffer);
+                    fprintf(Station, "\n");
+                    fclose(Station);
+
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /home/astra/ASTRA/Altitude.sh %s",
+                             altitudeString);
+                    system(bashCommand);
+                    moveBuffer(buffer,sizeof buffer);
+
+                    Station = fopen("/home/astra/ASTRA/Station.txt", "ab");
+                    fprintf(Station, "%s", buffer);
+                    fclose(Station);
+
+                } else if (buffer[0] == '2') {
+                    // Space-Track.org Credentials
+
+                    Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "r");
+                    fgets(username, sizeof username, Credentials);
+                    fgets(password, sizeof password, Credentials);
+                    fclose(Credentials);
+
+                    // Remove extra character form username variable
+                    char *e;
+                    int index;
+                    e = strchr(username, '\n');
+                    index = (int) (e - username);
+                    username[index] = '\0';
+
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /home/astra/ASTRA/Username.sh %s",
+                             username);
+                    system(bashCommand);
+                    moveBuffer(buffer,sizeof buffer);
+
+                    Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "w");
+                    fprintf(Credentials, "%s", buffer);
+                    fprintf(Credentials, "\n");
+                    fclose(Credentials);
+
+                    snprintf(bashCommand, sizeof(bashCommand),
+                             "bash /home/astra/ASTRA/Password.sh %s",
+                             password);
+                    system(bashCommand);
+                    moveBuffer(buffer, sizeof buffer);
+
+                    Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "ab");
+                    fprintf(Credentials, "%s", buffer);
+                    fclose(Credentials);
+
+                }
+            }
+        }
+    }
+    // Start ASTRA
+    system("bash /home/astra/ASTRA/Manual-Select.sh");
+    moveBuffer(buffer, sizeof buffer);
+    // Get lat long and alt from Station file
+    Station = fopen("/home/astra/ASTRA/Station.txt", "r");
     fgets(latitudeString,sizeof latitudeString, Station);
     fgets(longitudeString,sizeof longitudeString, Station);
     fgets(altitudeString,sizeof altitudeString, Station);
@@ -76,25 +178,18 @@ int main() {
     // Convert latitude to radians for future calculations
     latitude = deg2rad(latitude);
 
-    char manualTLE;
+    if (buffer[0] == '1') {
+        // Use NORAD ID (Space-Track.org)
 
-    printf("Is this a manual TLE? (y/n): ");
-    scanf("%c", &manualTLE);
-
-    if (manualTLE == 'n') {
+        system("bash /home/astra/ASTRA/NORAD.sh");
+        moveBuffer(buffer, sizeof buffer);
 
         // Get the NORAD ID of the satellite
-        char NORAD[7];
-        char cookie_Command[150];
-        char TLE_Command[150];
-        printf("NORAD ID: ");
-        scanf("%s", NORAD);
+        char cookie_Command[250];
+        char TLE_Command[250];
 
         // Get username and password form Credentials file
-        FILE *Credentials;
-        Credentials = fopen("Credentials.txt", "r");
-        char username[72];
-        char password[72];
+        Credentials = fopen("/home/astra/ASTRA/Credentials.txt", "r");
         fgets(username, sizeof username, Credentials);
         fgets(password, sizeof password, Credentials);
         fclose(Credentials);
@@ -114,16 +209,29 @@ int main() {
         // Use NORAD ID to make API command
         // Puts TLE in TLE.txt
         snprintf(TLE_Command, sizeof(TLE_Command),
-                 "curl --limit-rate 100K --cookie cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > TLE.txt",
-                 NORAD);
+                 "curl --limit-rate 100K --cookie cookies.txt https://www.space-track.org/basicspacedata/query/class/gp/format/tle/NORAD_CAT_ID/%s  > /home/astra/ASTRA/TLE.txt",
+                 buffer);
         system(TLE_Command);
-    } else if (manualTLE != 'y'){
-        printf("Incompatabile letter.\n");
+
+    } else if (buffer[0] == '2'){
+        // Manually Enter New TLE
+        system("bash /home/astra/ASTRA/TLE1.sh");
+        moveBuffer(buffer, sizeof buffer);
+        TLE = fopen("/home/astra/ASTRA/TLE.txt", "w");
+        fprintf(TLE, "%s", buffer);
+        fprintf(TLE, "\n");
+        fclose(TLE);
+
+        system("bash /home/astra/ASTRA/TLE2.sh");
+        moveBuffer(buffer, sizeof buffer);
+        TLE = fopen("/home/astra/ASTRA/TLE.txt", "ab");
+        fprintf(TLE, "%s", buffer);
+        fclose(TLE);
+
     }
 
     // Open TLE.txt and read lines to strings
-    FILE *TLE;
-    TLE = fopen("TLE.txt", "r");
+    TLE = fopen("/home/astra/ASTRA/TLE.txt", "r");
     char TLE_Line1[72];
     char TLE_Line2[72];
     fgets(TLE_Line1,sizeof TLE_Line1, TLE);
@@ -131,23 +239,23 @@ int main() {
     fclose(TLE);
 
     // Copy numbers from strings to usable variables
-    char test[13];
-    string_select(TLE_Line1, 18, 19, test, sizeof(test));
-    epochYear = atoi(test) + 2000;
-    string_select(TLE_Line1, 20, 31, test, sizeof(test));
-    epoch = atof(test);
-    string_select(TLE_Line2, 8, 15, test, sizeof(test));
-    inclination = atof(test);
-    string_select(TLE_Line2, 17, 24, test, sizeof(test));
-    raan = atof(test);
-    string_select(TLE_Line2, 26, 32, test, sizeof(test));
-    eccentricity = atof(test) * 0.0000001;
-    string_select(TLE_Line2, 34, 41, test, sizeof(test));
-    argumentOfPerigee = atof(test);
-    string_select(TLE_Line2, 43, 50, test, sizeof(test));
-    TLE_meanAnomaly = atof(test);
-    string_select(TLE_Line2, 52, 62, test, sizeof(test));
-    meanMotion = atof(test);
+    char splitter[13];
+    string_select(TLE_Line1, 18, 19, splitter, sizeof(splitter));
+    epochYear = atoi(splitter) + 2000;
+    string_select(TLE_Line1, 20, 31, splitter, sizeof(splitter));
+    epoch = atof(splitter);
+    string_select(TLE_Line2, 8, 15, splitter, sizeof(splitter));
+    inclination = atof(splitter);
+    string_select(TLE_Line2, 17, 24, splitter, sizeof(splitter));
+    raan = atof(splitter);
+    string_select(TLE_Line2, 26, 32, splitter, sizeof(splitter));
+    eccentricity = atof(splitter) * 0.0000001;
+    string_select(TLE_Line2, 34, 41, splitter, sizeof(splitter));
+    argumentOfPerigee = atof(splitter);
+    string_select(TLE_Line2, 43, 50, splitter, sizeof(splitter));
+    TLE_meanAnomaly = atof(splitter);
+    string_select(TLE_Line2, 52, 62, splitter, sizeof(splitter));
+    meanMotion = atof(splitter);
 
     // Step 2: Calculate h (specific angular momentum)
 
@@ -165,79 +273,17 @@ int main() {
     // Substituting Equation 2.73 we can set r = r_p and theta = 0
     h = sqrt(EARTH_MU * a * (1 - pow(eccentricity,2)));
 
-    // Step 5 is out of order because the first part is not dependent on time (and therefore does not need to be in the loop) but the second part is.
-    // Step 5a: Calculate the Rotation Matrix
+    // Perturbations
+    double w_dot; // Average rate of change in argument of perigee
+    double omega_dot; // Average rate of change in RAAN
 
     // Define the transformation matrix Q based on inclination, RAAN, and argument of perigee
     double raanRad = deg2rad(raan);
     double inclinationRad = deg2rad(inclination);
     double argumentOfPerigeeRad = deg2rad(argumentOfPerigee);
 
-    // Equation 4.49
-    double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
-            {cos(argumentOfPerigeeRad), sin(argumentOfPerigeeRad), 0},
-            {-sin(argumentOfPerigeeRad), cos(argumentOfPerigeeRad), 0},
-            {0, 0, 1},
-    };
-    // Equation 4.32
-    double R_2[NUM_ROWS_Q][NUM_COLS_Q] = {
-            {1, 0 ,0},
-            {0, cos(inclinationRad), sin(inclinationRad)},
-            {0, -sin(inclinationRad), cos(inclinationRad)}
-
-    };
-    // Equation 4.34
-    double R_3[NUM_ROWS_Q][NUM_COLS_Q] = {
-            {cos(raanRad), sin(raanRad), 0},
-            {-sin(raanRad), cos(raanRad), 0},
-            {0, 0, 1},
-    };
-
-    double R_1_2resultMatrix[NUM_ROWS_Q][NUM_COLS_Q]={
-            {0, 0, 0},
-            {0, 0, 0},
-            {0, 0, 0}
-    };
-
-    double Q_Matrix[NUM_ROWS_Q][NUM_COLS_Q]={
-            {0, 0, 0},
-            {0, 0, 0},
-            {0, 0, 0}
-    };
-
-    // Equation 4.49 for next four loops
-    // Perform matrix multiplication R_1 * R_2
-    for (int i = 0; i < NUM_ROWS_Q; i++) {
-        for (int j = 0; j < NUM_COLS_Q; j++) {
-            R_1_2resultMatrix[i][j] = 0; // Initialize the element to 0
-            for (int k = 0; k < NUM_COLS_Q; k++) {
-                R_1_2resultMatrix[i][j] += R_1[i][k] * R_2[k][j];
-            }
-        }
-    }
-
-    // Perform matrix multiplication (R_1 * R_2) * R_3
-    for (int i = 0; i < NUM_ROWS_Q; i++) {
-        for (int j = 0; j < NUM_COLS_Q; j++) {
-            Q_Matrix[i][j] = 0; // Initialize the element to 0
-            for (int k = 0; k < NUM_COLS_Q; k++) {
-                Q_Matrix[i][j] += R_1_2resultMatrix[i][k] * R_3[k][j];
-            }
-        }
-    }
-
-    double Q_Matrix_New[NUM_ROWS_Q][NUM_COLS_Q]= {
-            {0, 0, 0},
-            {0, 0, 0},
-            {0, 0, 0}
-    };
-
-    // Transpose the Q_Matrix
-    for (int i = 0; i < NUM_ROWS_Q; i++) {
-        for (int j = 0; j < NUM_COLS_Q; j++) {
-            Q_Matrix_New[j][i] = Q_Matrix[i][j];
-        }
-    }
+    omega_dot = -((3.0/2.0) * ((J_2 * sqrt(EARTH_MU) * pow(EARTH_RADIUS_EQUATORIAL, 2)) / (pow(a, 7.0/2) * pow((1 - pow(eccentricity, 2)), 2)))) * (cos(inclinationRad));
+    w_dot = -(3.0/2.0) * ((J_2 * sqrt(EARTH_MU) * pow(EARTH_RADIUS_EQUATORIAL, 2)) /( (pow(a, 7.0/2) * pow((1 - pow(eccentricity, 2)), 2)))) * ((5.0/2.0) * pow((sin(inclinationRad)), 2) -2);
 
     int prevElevation, prevAzimuth;
     prevAzimuth = -1;
@@ -259,7 +305,7 @@ int main() {
         // Step 3: Calculate True Anomaly
 
         double dayOfYear = ptr->tm_yday + 1 + UT/24;
-        // Time since the TLE was observed
+        // Time since the TLE was observed in days
         // Assumes the TLE and current year are the same
         double delta_t = dayOfYear - epoch;
         double delta_MeanAnamoly = delta_t * meanMotion * 360;
@@ -281,6 +327,80 @@ int main() {
         r_perifocal[2][0] = 0; // z-component
 
         //Step 5: Rotate position vector to geo equatorial frame
+
+        double currentArgumentOfPerigeeRad, currentRaanRad;
+        //TESTING
+        currentArgumentOfPerigeeRad = argumentOfPerigeeRad + w_dot * delta_t * 24 * 60 * 60;
+        currentRaanRad = raanRad + omega_dot * delta_t * 24 * 60 * 60;
+
+        // Step 5a: Calculate the Rotation Matrix
+
+        // Equation 4.49
+        double R_1[NUM_ROWS_Q][NUM_COLS_Q] = {
+                {cos(currentArgumentOfPerigeeRad), sin(currentArgumentOfPerigeeRad), 0},
+                {-sin(currentArgumentOfPerigeeRad), cos(currentArgumentOfPerigeeRad), 0},
+                {0, 0, 1},
+        };
+        // Equation 4.32
+        double R_2[NUM_ROWS_Q][NUM_COLS_Q] = {
+                {1, 0 ,0},
+                {0, cos(inclinationRad), sin(inclinationRad)},
+                {0, -sin(inclinationRad), cos(inclinationRad)}
+
+        };
+        // Equation 4.34
+        double R_3[NUM_ROWS_Q][NUM_COLS_Q] = {
+                {cos(currentRaanRad), sin(currentRaanRad), 0},
+                {-sin(currentRaanRad), cos(currentRaanRad), 0},
+                {0, 0, 1},
+        };
+
+        double R_1_2resultMatrix[NUM_ROWS_Q][NUM_COLS_Q]={
+                {0, 0, 0},
+                {0, 0, 0},
+                {0, 0, 0}
+        };
+
+        double Q_Matrix[NUM_ROWS_Q][NUM_COLS_Q]={
+                {0, 0, 0},
+                {0, 0, 0},
+                {0, 0, 0}
+        };
+
+        // Equation 4.49 for next four loops
+        // Perform matrix multiplication R_1 * R_2
+        for (int i = 0; i < NUM_ROWS_Q; i++) {
+            for (int j = 0; j < NUM_COLS_Q; j++) {
+                R_1_2resultMatrix[i][j] = 0; // Initialize the element to 0
+                for (int k = 0; k < NUM_COLS_Q; k++) {
+                    R_1_2resultMatrix[i][j] += R_1[i][k] * R_2[k][j];
+                }
+            }
+        }
+
+        // Perform matrix multiplication (R_1 * R_2) * R_3
+        for (int i = 0; i < NUM_ROWS_Q; i++) {
+            for (int j = 0; j < NUM_COLS_Q; j++) {
+                Q_Matrix[i][j] = 0; // Initialize the element to 0
+                for (int k = 0; k < NUM_COLS_Q; k++) {
+                    Q_Matrix[i][j] += R_1_2resultMatrix[i][k] * R_3[k][j];
+                }
+            }
+        }
+
+        double Q_Matrix_New[NUM_ROWS_Q][NUM_COLS_Q]= {
+                {0, 0, 0},
+                {0, 0, 0},
+                {0, 0, 0}
+        };
+
+        // Transpose the Q_Matrix
+        for (int i = 0; i < NUM_ROWS_Q; i++) {
+            for (int j = 0; j < NUM_COLS_Q; j++) {
+                Q_Matrix_New[j][i] = Q_Matrix[i][j];
+            }
+        }
+
         //      5b: Multiply the position vector and Rotation Matrix
 
         // Calculate the geocentric equatorial frame position vector
@@ -373,6 +493,9 @@ int main() {
         rho_R[1][0] = rho_R[1][0] / rho_size;
         rho_R[2][0] = rho_R[2][0] / rho_size;
 
+        double rangeRate = rho_size - prevSize ;
+        prevSize = rho_size;
+
         // convert unit vector to Azimuth and Elevation
         // Variations of Equation 5.58
         double Elevation = asin(rho_R[2][0]);
@@ -384,10 +507,9 @@ int main() {
         // Step 10: Check if Elevation is above horizon
         char scriptMessage[40];
         int azimuthInt, elevationInt;
-//      if the satellite is below the horizon move to home other wise move to vector position
-//      the current position of the rotator is checked to make sure we dont repeat commands
+//      if the satellite is below the horizon move to home otherwise move to vector position
+//      the current position of the rotator is checked to make sure we don't repeat commands
         if (rho_R[2][0] < 0) {
-            printf("Move to Home\n");
             if((prevAzimuth != 180) || (prevElevation != 0)){
                 system("/home/astra/rotatorScript.sh 180 0");
                 prevAzimuth = 180;
@@ -403,16 +525,31 @@ int main() {
                 prevElevation = elevationInt;
                 prevAzimuth = azimuthInt;
             }
-            printf("Move to Coordinates\n");
         }
 
-        printf("Azimuth: %f\n", rad2deg(Azimuth));
-        printf("Elevation: %f\n", rad2deg(Elevation));
+        char outputCommand[200];
+        snprintf(outputCommand, sizeof outputCommand,
+                 "bash /home/astra/ASTRA/Monitor.sh %f %f %f %f",
+                 rad2deg(Azimuth),
+                 rad2deg(Elevation),
+                 rho_size,
+                 rangeRate);
+        system(outputCommand);
+
+/*
+        char outputingThings[200];
+        snprintf(outputingThings, sizeof outputingThings,
+                 "%f, %f, %s",
+                 rad2deg(Azimuth),
+                 rad2deg(Elevation),
+                 ctime(&t));
+        OUTPUT = fopen("testSomething.txt", "ab");
+        fprintf(OUTPUT, "%s", outputingThings);
+        fclose(OUTPUT);
+*/
 
         sleep(1);
-
     }
-
     return 0;
 }
 
@@ -441,9 +578,9 @@ double calculateTrueAnomaly(double eccentricAnomaly, double eccentricity){
     return fmod(2* atan(sqrt( (1+eccentricity)/(1-eccentricity)) * tan(eccentricAnomaly/2)) + 2*M_PI,2*M_PI);
 }
 
-// sets the output string to zero then copies the specified part of the string to output
-void string_select(char *s, int index_start, int index_end , char *output, int size)
+void string_select(const char *s, int index_start, int index_end , char *output, int size)
 {
+    // sets the output string to zero then copies the specified part of the string to output
     for (int i = 0; i < size; i++) {
         output[i] = 0;
     }
@@ -453,3 +590,9 @@ void string_select(char *s, int index_start, int index_end , char *output, int s
     }
 }
 
+void moveBuffer(char *buffer, int size){
+    FILE *BUFFER;
+    BUFFER = fopen("/home/astra/ASTRA/text.txt", "r");
+    fgets(buffer, size, BUFFER);
+    fclose(BUFFER);
+}
