@@ -70,7 +70,7 @@ int main() {
     FILE *Credentials;
     FILE *Station;
     FILE *TLE;
-//    FILE *OUTPUT;
+    FILE *OUTPUT;
     buffer[0] = 'a';
 
     while (buffer[0] != '1') {
@@ -536,17 +536,15 @@ int main() {
                  rangeRate);
         system(outputCommand);
 
-/*
         char outputingThings[200];
         snprintf(outputingThings, sizeof outputingThings,
                  "%f, %f, %s",
                  rad2deg(Azimuth),
                  rad2deg(Elevation),
                  ctime(&t));
-        OUTPUT = fopen("testSomething.txt", "ab");
+        OUTPUT = fopen("/home/astra/testSomething.txt", "ab");
         fprintf(OUTPUT, "%s", outputingThings);
         fclose(OUTPUT);
-*/
 
         sleep(1);
     }
